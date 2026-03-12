@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+{% block header_title %}Your Alerts{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h3 class="text-3xl font-black text-gray-900 mb-1">Recent Notifications</h3>
+            <p class="text-gray-500 text-sm">Stay updated with system activities.</p>
+        </div>
+        <div class="flex gap-3">
+            {% if user.role == 'SUPER_ADMIN' %}
+            <a href="{% url 'join_request_list' %}" class="bg-indigo-50 text-indigo-600 px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Join Requests
+            </a>
+            {% endif %}
+            <button class="text-sm text-blue-600 font-bold hover:underline">Mark all as read</button>
+        </div>
+    </div>
+
+    {% for notification in notifications %}
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-start gap-4 animate-notification group">
+        <div class="w-12 h-12 {% if not notification.is_read %}bg-blue-600{% else %}bg-gray-100{% endif %} rounded-2xl flex items-center justify-center {% if not notification.is_read %}text-white{% else %}text-gray-400{% endif %} shrink-0 transition-colors">
+            <i data-lucide="bell" class="w-6 h-6"></i>
+        </div>
+        <div class="flex-1">
+            <div class="flex justify-between items-start mb-1">
+                <h4 class="font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{{ notification.title }}</h4>
+                <span class="text-xs text-gray-400 font-medium">{{ notification.created_at|timesince }} ago</span>
+            </div>
+            <p class="text-gray-600 text-sm leading-relaxed">{{ notification.message }}</p>
+            {% if notification.link %}
+            <a href="{{ notification.link }}" class="inline-flex items-center gap-1 text-sm text-blue-600 font-bold mt-3 hover:gap-2 transition-all">
+                View details <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% if not notification.is_read %}
+        <div class="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-[2rem] p-20 text-center border border-gray-100 shadow-sm">
+        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200">
+            <i data-lucide="bell-off" class="w-10 h-10"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">No notifications yet</h3>
+        <p class="text-gray-400 max-w-xs mx-auto text-sm">When you receive updates about transactions or messages, they will appear here.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        gsap.from(".animate-notification", {
+            y: 30,
+            opacity: 0,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: "power2.out"
+        });
+    });
+</script>
+{% endblock %}

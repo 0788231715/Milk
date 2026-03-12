@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions Management{% endblock %}
+{% block header_title %}Milk Transactions{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Recording Forms -->
+    <div class="lg:col-span-1 space-y-8">
+        <!-- Record Supply Card -->
+        <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all animate-on-load">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                    <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Record Supply</h3>
+            </div>
+            <form action="{% url 'record_supply' %}" method="POST" class="space-y-4">
+                {% csrf_token %}
+                {% for field in supply_form %}
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+                {% endfor %}
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-100">
+                    Record Supply
+                </button>
+            </form>
+        </div>
+
+        <!-- Record Sale Card -->
+        <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all animate-on-load">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                    <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Record Sale</h3>
+            </div>
+            <form action="{% url 'record_sale' %}" method="POST" class="space-y-4">
+                {% csrf_token %}
+                {% for field in sale_form %}
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+                {% endfor %}
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-100">
+                    Record Sale
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col animate-on-load">
+            <!-- Tabs Header -->
+            <div class="flex border-b border-gray-100">
+                <button onclick="showTab('supply')" id="btn-supply" class="flex-1 py-4 text-center font-bold text-blue-600 border-b-2 border-blue-600 transition-all">
+                    Supply History
+                </button>
+                <button onclick="showTab('sales')" id="btn-sales" class="flex-1 py-4 text-center font-bold text-gray-400 hover:text-indigo-600 transition-all border-b-2 border-transparent">
+                    Sales History
+                </button>
+            </div>
+
+            <!-- Tabs Content -->
+            <div class="flex-1 overflow-y-auto max-h-[800px]">
+                <!-- Supply Tab -->
+                <div id="tab-supply" class="p-4 space-y-4">
+                    {% for supply in supplies %}
+                    <div class="flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50/50 transition-all border border-transparent hover:border-blue-100 transaction-item">
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                            <i data-lucide="droplet" class="w-6 h-6"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-800">{{ supply.supplier.name }}</p>
+                            <p class="text-sm text-gray-500">{{ supply.date|date:"M d, Y • H:i" }} • {{ supply.site.name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-800">{{ supply.litres }} L</p>
+                            <p class="text-sm text-blue-600 font-semibold">RWF {{ supply.total_cost }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-12 text-gray-400 italic">No supply records found.</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Sales Tab -->
+                <div id="tab-sales" class="hidden p-4 space-y-4">
+                    {% for sale in sales %}
+                    <div class="flex items-center gap-4 p-4 rounded-2xl hover:bg-indigo-50/50 transition-all border border-transparent hover:border-indigo-100 transaction-item">
+                        <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                            <i data-lucide="truck" class="w-6 h-6"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-800">{{ sale.buyer.name }}</p>
+                            <p class="text-sm text-gray-500">{{ sale.date|date:"M d, Y • H:i" }} • From {{ sale.site_source.name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-800">{{ sale.litres }} L</p>
+                            <p class="text-sm text-indigo-600 font-semibold">RWF {{ sale.total_revenue }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-12 text-gray-400 italic">No sales records found.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(tab) {
+        const supplyTab = document.getElementById('tab-supply');
+        const salesTab = document.getElementById('tab-sales');
+        const btnSupply = document.getElementById('btn-supply');
+        const btnSales = document.getElementById('btn-sales');
+
+        if (tab === 'supply') {
+            supplyTab.classList.remove('hidden');
+            salesTab.classList.add('hidden');
+            btnSupply.className = 'flex-1 py-4 text-center font-bold text-blue-600 border-b-2 border-blue-600 transition-all';
+            btnSales.className = 'flex-1 py-4 text-center font-bold text-gray-400 hover:text-indigo-600 transition-all border-b-2 border-transparent';
+        } else {
+            supplyTab.classList.add('hidden');
+            salesTab.classList.remove('hidden');
+            btnSales.className = 'flex-1 py-4 text-center font-bold text-indigo-600 border-b-2 border-indigo-600 transition-all';
+            btnSupply.className = 'flex-1 py-4 text-center font-bold text-gray-400 hover:text-blue-600 transition-all border-b-2 border-transparent';
+        }
+        
+        // Refresh icons for new visible elements
+        lucide.createIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        gsap.from(".animate-on-load", {
+            y: 30,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.2,
+            ease: "power2.out"
+        });
+
+        gsap.from(".transaction-item", {
+            x: 50,
+            opacity: 0,
+            duration: 0.5,
+            stagger: 0.05,
+            ease: "power2.out",
+            delay: 0.5
+        });
+    });
+</script>
+{% endblock %}

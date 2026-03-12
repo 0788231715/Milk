@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block header_title %}Welcome, {{ user.username }}{% endblock %}
+
+{% block content %}
+<!-- Quick Stats Row (Today) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                <i data-lucide="droplets" class="w-6 h-6"></i>
+            </div>
+            <span class="text-blue-500 text-xs font-bold uppercase">Today</span>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium">Milk Collected</h3>
+        <p class="text-2xl font-bold text-gray-800">{{ milk_today }} L</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
+                <i data-lucide="trending-up" class="w-6 h-6"></i>
+            </div>
+            <span class="text-green-500 text-xs font-bold uppercase">Today</span>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium">Daily Revenue</h3>
+        <p class="text-2xl font-bold text-gray-800">RWF {{ revenue_today }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                <i data-lucide="wallet" class="w-6 h-6"></i>
+            </div>
+            <span class="text-indigo-500 text-xs font-bold uppercase">Today</span>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium">Daily Profit</h3>
+        <p class="text-2xl font-bold text-gray-800">RWF {{ profit_today }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
+                <i data-lucide="alert-circle" class="w-6 h-6"></i>
+            </div>
+            <span class="text-red-500 text-xs font-bold uppercase">{{ quality_issues_count }} Issues</span>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium">Active Suppliers</h3>
+        <p class="text-2xl font-bold text-gray-800">{{ active_suppliers_count }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Site Performance -->
+    <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <i data-lucide="map-pin" class="text-blue-600 w-5 h-5"></i>
+            Site Performance (Today)
+        </h3>
+        <div class="space-y-6">
+            {% for site in site_stats %}
+            <div class="site-row">
+                <div class="flex justify-between mb-2">
+                    <span class="font-semibold text-gray-700">{{ site.name }}</span>
+                    <span class="text-blue-600 font-bold">{{ site.collected }} L</span>
+                </div>
+                <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                    <div class="bg-blue-500 h-full site-progress" style="width: 0%" data-val="{{ site.collected }}"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Period Reports (Charts) -->
+    <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Weekly Trends Chart -->
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Weekly Trends</h3>
+                    <p class="text-sm text-gray-400">Milk vs Revenue</p>
+                </div>
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                    <i data-lucide="trending-up" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <div class="h-64">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Monthly Performance Chart -->
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Monthly Performance</h3>
+                    <p class="text-sm text-gray-400">Profit Distribution</p>
+                </div>
+                <div class="p-3 bg-purple-50 text-purple-600 rounded-2xl">
+                    <i data-lucide="pie-chart" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <div class="h-64">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Animation for site progress bars
+        gsap.to(".site-progress", {
+            width: (i, el) => {
+                const val = parseFloat(el.getAttribute('data-val'));
+                const max = 1000; // Target max for scale
+                return Math.min((val / max) * 100, 100) + "%";
+            },
+            duration: 1.5,
+            ease: "power4.out",
+            delay: 0.5
+        });
+
+        // Entrance animations
+        gsap.from(".stat-card", {
+            y: 30,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "power3.out"
+        });
+
+        // Weekly Trends Chart
+        const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+        new Chart(weeklyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Milk (L)',
+                    data: [{{ milk_today|default:0 }}, {{ milk_week|default:0 }}, {{ milk_month|default:0 }}, 0, 0, 0, 0], 
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+            }
+        });
+
+        // Monthly Performance Chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const revenueVal = parseFloat("{{ revenue_month }}") || 0;
+        const profitVal = parseFloat("{{ profit_today }}") || 0;
+        
+        new Chart(monthlyCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Revenue', 'Cost', 'Profit'],
+                datasets: [{
+                    data: [revenueVal, {{ cost_today|default:0 }}, profitVal],
+                    backgroundColor: ['#3b82f6', '#ef4444', '#10b981'],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Site Tracking - {{ site.name }}{% endblock %}
+{% block header_title %}Tracking: {{ site.name }} ({{ month_name }} {{ current_year }}){% endblock %}
+
+{% block content %}
+<div class="mb-8 flex items-center justify-between bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+    <div class="flex items-center gap-6">
+        <a href="{% url 'site_list' %}" class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
+            <i data-lucide="chevron-left" class="w-6 h-6"></i>
+        </a>
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">{{ site.name }}</h2>
+            <p class="text-sm text-gray-500">Daily Milk Intake Log</p>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <a href="?month={{ prev_month }}&year={{ prev_year }}" class="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 text-gray-600 transition-all">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </a>
+        <span class="font-bold text-gray-800 min-w-32 text-center">{{ month_name }} {{ current_year }}</span>
+        <a href="?month={{ next_month }}&year={{ next_year }}" class="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 text-gray-600 transition-all">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden" x-data="milkTracker()">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-100">
+                    <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase sticky left-0 bg-gray-50 z-10 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Supplier</th>
+                    {% for day in days %}
+                    <th class="px-3 py-4 text-center text-xs font-bold {% if day == today_day %}text-blue-600 bg-blue-50/50{% else %}text-gray-400{% endif %} min-w-16 border-l border-gray-50">
+                        {{ day }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for supplier in supplier_data %}
+                <tr class="hover:bg-gray-50/50 transition-all group">
+                    <td class="px-6 py-4 font-bold text-gray-800 sticky left-0 bg-white group-hover:bg-gray-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-[10px]">
+                                {{ supplier.name|slice:":2"|upper }}
+                            </div>
+                            <span class="truncate">{{ supplier.name }}</span>
+                        </div>
+                    </td>
+                    {% for day_record in supplier.days %}
+                    <td class="p-1 border-l border-gray-50 {% if day_record.day == today_day %}bg-blue-50/20{% endif %}">
+                        <input type="number" 
+                               step="0.1" 
+                               value="{{ day_record.litres }}"
+                               class="w-full h-10 text-center bg-transparent border-none focus:ring-2 focus:ring-blue-500 rounded-lg text-sm font-medium text-gray-700 placeholder-gray-300 transition-all {% if not day_record.can_edit %}cursor-not-allowed opacity-50{% endif %}"
+                               placeholder="-"
+                               {% if not day_record.can_edit %}disabled title="Permission denied for this date"{% endif %}
+                               @change="saveRecord({{ supplier.id }}, {{ day_record.day }}, $event.target.value)"
+                               @keydown.enter="$event.target.blur()">
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Context Menu for problem milk (simple approach: click to clear/mark) -->
+<div class="mt-8 flex gap-6">
+    <div class="flex items-center gap-2 text-sm text-gray-500">
+        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+        <span>Auto-saving</span>
+    </div>
+    <div class="flex items-center gap-2 text-sm text-gray-500">
+        <div class="w-3 h-3 rounded-full bg-blue-50 border border-blue-200"></div>
+        <span>Today's Date</span>
+    </div>
+    <p class="text-sm text-gray-400 italic ml-auto">To cancel a day, simply clear the value in the cell.</p>
+</div>
+
+<script>
+    function milkTracker() {
+        return {
+            async saveRecord(supplierId, day, value) {
+                const siteId = {{ site.id }};
+                const month = {{ current_month }};
+                const year = {{ current_year }};
+
+                try {
+                    const response = await fetch('/api/save-milk/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            supplier_id: supplierId,
+                            site_id: siteId,
+                            day: day,
+                            month: month,
+                            year: year,
+                            litres: value
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Optional: Show a tiny success indicator
+                        console.log('Saved:', data);
+                    } else {
+                        alert('Error saving data');
+                    }
+                } catch (error) {
+                    console.error('Save failed:', error);
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    /* Hide arrows in number inputs */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+{% endblock %}

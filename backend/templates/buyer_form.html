@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Buyer - MilkFlow{% endblock %}
+{% block header_title %}Edit Buyer Details{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-[2.5rem] p-10 md:p-16 border border-gray-100 shadow-sm relative overflow-hidden">
+        <div class="relative z-10">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Update Buyer</h2>
+            <p class="text-gray-500 mb-10">Modify the buyer profile and contact details.</p>
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-gray-400 uppercase tracking-wider">{{ field.label }}</label>
+                    <div class="relative">
+                        {{ field }}
+                    </div>
+                    {% if field.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <div class="pt-6 flex flex-col md:flex-row gap-4">
+                    <button type="submit" class="bg-indigo-600 text-white font-bold py-4 px-8 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 flex-1">
+                        Save Changes
+                    </button>
+                    <a href="{% url 'buyer_list' %}" class="bg-gray-50 text-gray-600 font-bold py-4 px-8 rounded-2xl hover:bg-gray-100 transition-all text-center">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-50 rounded-full opacity-50"></div>
+    </div>
+</div>
+
+<style>
+    input[type="text"], select {
+        width: 100%;
+        background-color: #f9fafb;
+        border: none;
+        border-radius: 1rem;
+        padding: 1rem 1.25rem;
+        outline: none;
+        transition: all 0.2s;
+    }
+    input:focus, select:focus {
+        box-shadow: 0 0 0 2px #6366f1;
+        background-color: #ffffff;
+    }
+</style>
+{% endblock %}

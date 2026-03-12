@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MilkFlow - Quality Milk Wholesale</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .hero-gradient { background: linear-gradient(135deg, #2563eb 0%, #4338ca 100%); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+                    <i data-lucide="droplets"></i>
+                </div>
+                <span class="font-bold text-2xl text-gray-900 tracking-tight">MilkFlow</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 font-medium text-gray-600">
+                <a href="#about" class="hover:text-blue-600 transition-colors">About Us</a>
+                <a href="#advertising" class="hover:text-blue-600 transition-colors">Latest Updates</a>
+                <a href="#join" class="hover:text-blue-600 transition-colors">Partner With Us</a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'login_success' %}" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">My Dashboard</a>
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-gray-400 hover:text-red-500 font-bold transition-all ml-2">Logout</button>
+                </form>
+                {% else %}
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'login' %}" class="text-blue-600 font-bold hover:text-blue-700">Client Login</a>
+                    <a href="/admin/login/" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all text-sm font-bold">Staff Portal</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="pt-32 pb-20 hero-gradient text-white relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="max-w-3xl">
+                <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">Fresh Milk, Delivered with Integrity.</h1>
+                <p class="text-xl text-blue-100 mb-10 leading-relaxed">The leading milk wholesale management system connecting top-tier suppliers with quality dairies and buyers across the region.</p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#join" class="bg-white text-blue-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-blue-50 transition-all shadow-xl">Join Our Network</a>
+                    <a href="#about" class="border-2 border-white/30 backdrop-blur-md px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/10 transition-all">Learn More</a>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative SVG -->
+        <div class="absolute right-0 bottom-0 w-1/2 opacity-10 pointer-events-none">
+            <i data-lucide="milestone" class="w-full h-full text-white"></i>
+        </div>
+    </header>
+
+    <!-- How It Works / Services -->
+    <section class="py-24 bg-white relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">How MilkFlow Works</h2>
+                <p class="text-gray-500 max-w-2xl mx-auto">We bridge the gap between quality milk production and reliable distribution through a transparent, technology-driven platform.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <div class="p-10 bg-blue-50 rounded-[3rem] border border-blue-100 hover:shadow-xl transition-all">
+                    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg shadow-blue-200">
+                        <i data-lucide="tractor"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">For Suppliers</h3>
+                    <p class="text-gray-600 leading-relaxed mb-6">Register your farm, supply milk to our local collection sites, and track your daily production and earnings through our digital portal.</p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> Transparent Pricing</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> Daily Record Tracking</li>
+                    </ul>
+                </div>
+
+                <div class="p-10 bg-indigo-50 rounded-[3rem] border border-indigo-100 hover:shadow-xl transition-all">
+                    <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg shadow-indigo-200">
+                        <i data-lucide="truck"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Collection Hubs</h3>
+                    <p class="text-gray-600 leading-relaxed mb-6">Our sites in Nyarubuye, Bwana, and Nkomangwa serve as quality testing and collection points ensuring ISO standards are met.</p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-indigo-600"></i> ISO Quality Testing</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-indigo-600"></i> Efficient Logistics</li>
+                    </ul>
+                </div>
+
+                <div class="p-10 bg-purple-50 rounded-[3rem] border border-purple-100 hover:shadow-xl transition-all">
+                    <div class="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg shadow-purple-200">
+                        <i data-lucide="store"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">For Buyers</h3>
+                    <p class="text-gray-600 leading-relaxed mb-6">Access high-volume, quality-certified milk. Manage your orders, invoices, and purchase history from a single dashboard.</p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-600"></i> Guaranteed Quality</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-600"></i> Bulk Order Management</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Success Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-6 mt-8">
+        {% for message in messages %}
+        <div class="bg-green-100 border border-green-200 text-green-700 px-6 py-4 rounded-2xl flex items-center gap-3 animate-pulse">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Advertising / Updates Section -->
+    <section id="advertising" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Latest News & Advertising</h2>
+                <p class="text-gray-500 max-w-2xl mx-auto">Stay updated with our latest business movements, milk prices, and market standards.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {% for item in announcements %}
+                <div class="bg-gray-50 rounded-[2rem] overflow-hidden border border-gray-100 hover:shadow-xl transition-all group">
+                    {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
+                    {% else %}
+                    <div class="w-full h-48 bg-blue-100 flex items-center justify-center text-blue-400">
+                        <i data-lucide="image" class="w-12 h-12"></i>
+                    </div>
+                    {% endif %}
+                    <div class="p-8">
+                        <span class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2 block">Announcement</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">{{ item.title }}</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed mb-6">{{ item.content|truncatewords:20 }}</p>
+                        <span class="text-xs text-gray-400">{{ item.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-gray-400 col-span-3">Check back soon for latest updates!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Market Standards -->
+    {% if milk_standard %}
+    <section class="py-16 bg-blue-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="bg-white rounded-[3rem] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 shadow-sm border border-blue-100">
+                <div class="flex-1">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Current Market Standards</h2>
+                    <p class="text-gray-600 mb-8">{{ milk_standard.guidelines }}</p>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="bg-gray-50 p-6 rounded-2xl">
+                            <p class="text-xs text-gray-400 font-bold uppercase mb-1">Base Price</p>
+                            <p class="text-2xl font-bold text-blue-600">RWF {{ milk_standard.base_price_per_litre }}/L</p>
+                        </div>
+                        <div class="bg-gray-50 p-6 rounded-2xl">
+                            <p class="text-xs text-gray-400 font-bold uppercase mb-1">Fat Target</p>
+                            <p class="text-2xl font-bold text-blue-600">{{ milk_standard.min_fat_content }}% Min</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full md:w-80 h-80 bg-blue-600 rounded-[2rem] flex items-center justify-center text-white shadow-2xl rotate-3">
+                    <div class="text-center">
+                        <i data-lucide="award" class="w-20 h-20 mx-auto mb-4"></i>
+                        <p class="font-bold text-xl">Certified Quality</p>
+                        <p class="text-blue-100 text-sm mt-2">ISO 22000 Standards</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- About Section -->
+    <section id="about" class="py-24">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+            <div class="relative">
+                <div class="w-full h-[500px] bg-gray-200 rounded-[3rem] overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1550989460-0adf9ea622e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" class="w-full h-full object-cover">
+                </div>
+                <div class="absolute -bottom-10 -right-10 bg-white p-10 rounded-[2rem] shadow-2xl hidden md:block">
+                    <p class="text-4xl font-black text-blue-600 mb-2">100%</p>
+                    <p class="text-gray-500 font-bold">Pure Organic Milk</p>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-4xl font-bold mb-8">Committed to Excellence in Wholesale</h2>
+                <p class="text-lg text-gray-600 leading-relaxed mb-8">Our wholesale management system is designed to streamline the milk supply chain. We work directly with local farmers across Nyarubuye, Bwana, and Nkomangwa to ensure that every drop of milk meets the highest purity standards before reaching our buyers.</p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3 font-bold"><i data-lucide="check" class="text-green-500"></i> Efficient Logistics Network</li>
+                    <li class="flex items-center gap-3 font-bold"><i data-lucide="check" class="text-green-500"></i> Fair Pricing for Farmers</li>
+                    <li class="flex items-center gap-3 font-bold"><i data-lucide="check" class="text-green-500"></i> Real-time Quality Monitoring</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Join Request Form -->
+    <section id="join" class="py-24 bg-gray-900 text-white overflow-hidden relative">
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
+                <div>
+                    <h2 class="text-4xl md:text-5xl font-bold mb-8">Become a Partner</h2>
+                    <p class="text-xl text-gray-400 mb-12">Whether you are a local milk producer (Supplier) or a dairy/seller (Buyer), we invite you to join our growing network.</p>
+                    <div class="space-y-8">
+                        <div class="flex gap-6">
+                            <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="phone-call" class="text-blue-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold mb-1">Direct Contact</h4>
+                                <p class="text-gray-500">+250 788 000 000</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-6">
+                            <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="mail" class="text-blue-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold mb-1">Email Support</h4>
+                                <p class="text-gray-500">partners@milkflow.com</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-[3rem] p-10 text-gray-800 shadow-2xl">
+                    <form action="{% url 'join_request' %}" method="POST" class="space-y-6">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-400 uppercase mb-2">Full Name</label>
+                                <input type="text" name="name" required class="w-full bg-gray-50 border-none rounded-xl px-5 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-400 uppercase mb-2">Phone Number</label>
+                                <input type="text" name="phone" required class="w-full bg-gray-50 border-none rounded-xl px-5 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-400 uppercase mb-2">Email Address</label>
+                            <input type="email" name="email" class="w-full bg-gray-50 border-none rounded-xl px-5 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-400 uppercase mb-2">I want to join as a:</label>
+                            <select name="request_type" class="w-full bg-gray-50 border-none rounded-xl px-5 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="SUPPLIER">Supplier (I have milk to sell)</option>
+                                <option value="BUYER">Buyer (I want to buy milk)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-400 uppercase mb-2">Message (Optional)</label>
+                            <textarea name="message" rows="3" class="w-full bg-gray-50 border-none rounded-xl px-5 py-3 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">Send Partnership Request</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-gray-100 bg-white">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:row items-center justify-between gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                    <i data-lucide="droplets" class="w-4 h-4"></i>
+                </div>
+                <span class="font-bold text-lg">MilkFlow</span>
+            </div>
+            <p class="text-gray-400 text-sm">© 2026 MilkFlow Wholesale Management. All rights reserved.</p>
+            <div class="flex gap-6 text-gray-400">
+                <a href="/admin/login/" class="hover:text-blue-600">Staff Login</a>
+                <a href="#" class="hover:text-blue-600">Privacy Policy</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

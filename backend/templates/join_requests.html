@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Join Requests - MilkFlow{% endblock %}
+{% block header_title %}Pending Join Requests{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="mb-10 flex items-center justify-between bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
+        <div class="relative z-10">
+            <h2 class="text-3xl font-black text-gray-900 mb-2">Registration Requests</h2>
+            <p class="text-gray-500">Review and approve new partners for the MilkFlow network.</p>
+        </div>
+        <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center relative z-10">
+            <i data-lucide="user-plus" class="w-8 h-8"></i>
+        </div>
+        <!-- Decorative bg -->
+        <div class="absolute -right-10 -top-10 w-48 h-48 bg-blue-50 rounded-full opacity-50"></div>
+    </div>
+
+    <div class="space-y-6">
+        {% for req in requests %}
+        <div class="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex flex-col md:flex-row justify-between gap-8">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest 
+                            {% if req.request_type == 'SUPPLIER' %}bg-blue-100 text-blue-600{% else %}bg-indigo-100 text-indigo-600{% endif %}">
+                            {{ req.request_type }}
+                        </span>
+                        <span class="text-gray-300 text-xs">•</span>
+                        <span class="text-gray-400 text-xs font-bold">{{ req.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ req.name }}</h3>
+                    
+                    <div class="flex flex-wrap gap-6 mb-6">
+                        <div class="flex items-center gap-2 text-gray-500">
+                            <i data-lucide="phone" class="w-4 h-4 text-blue-500"></i>
+                            <span class="font-medium text-sm">{{ req.phone }}</span>
+                        </div>
+                        {% if req.email %}
+                        <div class="flex items-center gap-2 text-gray-500">
+                            <i data-lucide="mail" class="w-4 h-4 text-blue-500"></i>
+                            <span class="font-medium text-sm">{{ req.email }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if req.message %}
+                    <div class="bg-gray-50 p-4 rounded-2xl text-gray-600 text-sm italic border-l-4 border-blue-200">
+                        "{{ req.message }}"
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="flex md:flex-col gap-3 justify-center min-w-[160px]">
+                    <a href="{% url 'process_join_request' req.id 'accept' %}" 
+                       class="flex-1 bg-green-600 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-100">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i> Approve
+                    </a>
+                    <a href="{% url 'process_join_request' req.id 'reject' %}" 
+                       class="flex-1 bg-white text-gray-400 border border-gray-100 px-6 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Ignore
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-[2rem] p-20 text-center border border-gray-100 border-dashed">
+            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="inbox" class="w-10 h-10 text-gray-200"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">All Clear!</h3>
+            <p class="text-gray-400">There are no pending join requests to process.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

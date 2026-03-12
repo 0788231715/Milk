@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - MilkFlow{% endblock %}
+{% block header_title %}Personal Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Profile Header Card -->
+    <div class="bg-white rounded-[2.5rem] p-8 md:p-12 border border-gray-100 shadow-sm mb-10 relative overflow-hidden">
+        <div class="flex flex-col md:flex-row items-center gap-8 relative z-10">
+            <div class="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-blue-200">
+                {{ user.username|slice:":2"|upper }}
+            </div>
+            <div class="text-center md:text-left">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2">{{ profile.name|default:user.username }}</h2>
+                <div class="flex flex-wrap justify-center md:justify-start gap-4">
+                    <span class="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                        {{ user.get_role_display }}
+                    </span>
+                    <span class="text-gray-400 text-sm flex items-center gap-1">
+                        <i data-lucide="phone" class="w-4 h-4"></i>
+                        {{ profile.contact|default:"No contact info" }}
+                    </span>
+                    {% if profile.site %}
+                    <span class="text-gray-400 text-sm flex items-center gap-1">
+                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        {{ profile.site.name }} Hub
+                    </span>
+                    {% endif %}
+                    <a href="{% url 'password_change' %}" class="text-blue-600 text-sm font-bold flex items-center gap-1 hover:underline">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                        Change Password
+                    </a>
+                </div>
+            </div>
+            <div class="md:ml-auto text-center md:text-right">
+                <p class="text-sm text-gray-400 font-bold uppercase mb-1">Current Balance</p>
+                <p class="text-4xl font-black text-blue-600">RWF {{ profile.current_balance|default:"0.00" }}</p>
+                
+                {% if user.role == 'SUPPLIER' or user.role == 'BUYER' %}
+                <div class="mt-6 flex gap-3 justify-center md:justify-end">
+                    <a href="{% url 'chat' %}" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-100 transition-all">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        Chat with Manager
+                    </a>
+                    <button @click="alert('Profile update request sent to admin!')" class="bg-gray-50 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-gray-100 transition-all">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        Request Update
+                    </button>
+                </div>
+                <p class="text-[10px] text-gray-400 italic mt-3">* Personal details are read-only for security.</p>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Decorative Background -->
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-50 rounded-full opacity-50"></div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6">
+                <i data-lucide="package"></i>
+            </div>
+            <p class="text-gray-400 text-sm font-bold uppercase mb-2">
+                {% if user.role == 'SUPPLIER' %}Total Supplied{% elif user.role == 'BUYER' %}Total Bought{% else %}Business Activity{% endif %}
+            </p>
+            <p class="text-3xl font-bold text-gray-900">
+                {% if user.role == 'SUPPLIER' %}
+                    {{ total_supplied|default:"0" }}
+                {% elif user.role == 'BUYER' %}
+                    {{ total_bought|default:"0" }}
+                {% else %}
+                    0
+                {% endif %} L
+            </p>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6">
+                <i data-lucide="activity"></i>
+            </div>
+            <p class="text-gray-400 text-sm font-bold uppercase mb-2">Monthly Activity</p>
+            <p class="text-3xl font-bold text-gray-900">{{ records|length }} Records</p>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center mb-6">
+                <i data-lucide="calendar"></i>
+            </div>
+            <p class="text-gray-400 text-sm font-bold uppercase mb-2">Member Since</p>
+            <p class="text-2xl font-bold text-gray-900">{{ user.date_joined|date:"M Y" }}</p>
+        </div>
+    </div>
+
+    <!-- Recent History Table -->
+    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-10">
+        <div class="px-8 py-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+            <h3 class="text-xl font-bold text-gray-800">Recent Transaction History</h3>
+            <button class="text-blue-600 font-bold text-sm hover:underline">Download Statement</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-white">
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase">Date</th>
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase">Volume</th>
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase">Rate</th>
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase">Total Value</th>
+                        <th class="px-8 py-5 text-xs font-bold text-gray-400 uppercase">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for record in records %}
+                    <tr class="hover:bg-gray-50/50 transition-all">
+                        <td class="px-8 py-5 text-gray-600 font-medium">{{ record.date|date:"M d, Y" }}</td>
+                        <td class="px-8 py-5 font-bold text-gray-800">{{ record.litres }} L</td>
+                        <td class="px-8 py-5 text-gray-500">RWF {{ record.price_per_litre }}/L</td>
+                        <td class="px-8 py-5 font-bold text-blue-600">
+                            RWF {{ record.total_cost|default:record.total_revenue }}
+                        </td>
+                        <td class="px-8 py-5">
+                            {% if record.is_paid %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-600"></span> Settled
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-orange-600"></span> Pending
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-8 py-12 text-center text-gray-400 italic">No transaction records found yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

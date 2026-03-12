@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Buyers Management{% endblock %}
+{% block header_title %}Buyers List{% endblock %}
+
+{% block content %}
+<div x-data="{ open: false }">
+    <div class="mb-8 flex justify-between items-center">
+        <div class="relative w-96">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                <i data-lucide="search" class="w-5 h-5"></i>
+            </span>
+            <input type="text" placeholder="Search buyers..." class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm">
+        </div>
+        <button @click="open = true" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg shadow-indigo-200">
+            <i data-lucide="user-plus" class="w-5 h-5"></i>
+            Add New Buyer
+        </button>
+    </div>
+
+    <!-- Add Buyer Modal -->
+    <div x-show="open" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         style="display: none;"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="open = false">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                <div class="bg-white px-8 pt-6 pb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">Add New Buyer</h3>
+                        <button @click="open = false" class="text-gray-400 hover:text-gray-600 transition-all">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+
+                    <form action="{% url 'buyer_add' %}" method="POST" class="space-y-4">
+                        {% csrf_token %}
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Buyer Name</label>
+                            <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Contact Details</label>
+                            <input type="text" name="contact" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                        </div>
+                        <div class="pt-4 flex gap-3">
+                            <button type="button" @click="open = false" class="flex-1 px-4 py-2 border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 transition-all">Cancel</button>
+                            <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">Save Buyer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Buyer Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="glass-card p-6 rounded-2xl border border-white shadow-sm flex items-center gap-4 animate-on-load">
+        <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+            <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Total Buyers</p>
+            <p class="text-2xl font-bold text-gray-800">{{ buyers|length }}</p>
+        </div>
+    </div>
+    <div class="glass-card p-6 rounded-2xl border border-white shadow-sm flex items-center gap-4 animate-on-load">
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+            <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Monthly Sales</p>
+            <p class="text-2xl font-bold text-gray-800">RWF 0.00</p>
+        </div>
+    </div>
+    <div class="glass-card p-6 rounded-2xl border border-white shadow-sm flex items-center gap-4 animate-on-load">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Total Credit</p>
+            <p class="text-2xl font-bold text-gray-800">RWF 0.00</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Table -->
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-on-load">
+    <table class="w-full text-left">
+        <thead class="bg-gray-50 border-b border-gray-100">
+            <tr>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Buyer Name</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Contact Details</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Outstanding Balance</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Last Purchase</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Action</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+            {% for buyer in buyers %}
+            <tr class="hover:bg-indigo-50/30 transition-all cursor-pointer buyer-row">
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-xs font-bold">
+                            {{ buyer.name|slice:":2"|upper }}
+                        </div>
+                        <span class="font-medium text-gray-800">{{ buyer.name }}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ buyer.contact }}</td>
+                <td class="px-6 py-4 font-bold {% if buyer.current_balance > 0 %}text-red-600{% else %}text-gray-800{% endif %}">
+                    RWF {{ buyer.current_balance }}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-500">No records</td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Active
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        {% if user.role == 'SUPER_ADMIN' %}
+                        <a href="{% url 'buyer_edit' buyer.id %}" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </a>
+                        <form action="{% url 'buyer_delete' buyer.id %}" method="POST" onsubmit="return confirm('Are you sure you want to delete this buyer?')" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </form>
+                        {% else %}
+                        <button class="text-gray-400 cursor-not-allowed">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-400 italic">
+                    <div class="flex flex-col items-center gap-3">
+                        <i data-lucide="shopping-cart" class="w-12 h-12 opacity-20"></i>
+                        No buyers added yet.
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        gsap.from(".animate-on-load", {
+            y: 20,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "power2.out"
+        });
+
+        gsap.from(".buyer-row", {
+            x: 20,
+            opacity: 0,
+            duration: 0.5,
+            stagger: 0.05,
+            ease: "power2.out",
+            delay: 0.4
+        });
+    });
+</script>
+{% endblock %}
