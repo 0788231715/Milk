@@ -144,6 +144,9 @@
                 </td>
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
+                        <a href="{% url 'supplier_report' supplier.id %}" target="_blank" class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all" title="View Statement">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                        </a>
                         {% if user.role == 'SUPER_ADMIN' %}
                         <a href="{% url 'supplier_edit' supplier.id %}" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
                             <i data-lucide="edit-2" class="w-4 h-4"></i>

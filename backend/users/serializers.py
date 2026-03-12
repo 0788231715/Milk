@@ -4,7 +4,7 @@ from .models import User, ManagerPermission
 class ManagerPermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ManagerPermission
-        fields = ['can_see_revenue', 'can_see_transactions', 'can_add_users', 'can_manage_sites']
+        fields = ['can_see_revenue', 'can_see_transactions', 'can_add_users', 'can_manage_sites', 'can_edit_past_dates', 'assigned_site']
 
 class UserSerializer(serializers.ModelSerializer):
     manager_permissions = ManagerPermissionSerializer(read_only=True)

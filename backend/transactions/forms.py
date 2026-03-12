@@ -14,6 +14,31 @@ class MilkSupplyForm(forms.ModelForm):
             'quality_rating': forms.Select(choices=[(i, f"{i}/10") for i in range(1, 11)], attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition-all'}),
         }
 
+from .models import MilkSupplyRecord, MilkSaleRecord, Expense, MilkLoss
+
+class ExpenseForm(forms.ModelForm):
+    class Meta:
+        model = Expense
+        fields = ['site', 'category', 'amount', 'description', 'date']
+        widgets = {
+            'site': forms.Select(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500'}),
+            'category': forms.Select(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500'}),
+            'amount': forms.NumberInput(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500', 'placeholder': 'Amount in RWF'}),
+            'description': forms.Textarea(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500', 'rows': 2, 'placeholder': 'e.g., Fuel for transport'}),
+            'date': forms.DateInput(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500', 'type': 'date'}),
+        }
+
+class MilkLossForm(forms.ModelForm):
+    class Meta:
+        model = MilkLoss
+        fields = ['site', 'litres', 'reason', 'date']
+        widgets = {
+            'site': forms.Select(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-red-500 focus:border-red-500'}),
+            'litres': forms.NumberInput(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-red-500 focus:border-red-500', 'placeholder': 'Lost Litres'}),
+            'reason': forms.TextInput(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-red-500 focus:border-red-500', 'placeholder': 'e.g., Spillage during transport'}),
+            'date': forms.DateInput(attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-red-500 focus:border-red-500', 'type': 'date'}),
+        }
+
 class MilkSaleForm(forms.ModelForm):
     class Meta:
         model = MilkSaleRecord

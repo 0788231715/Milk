@@ -1,5 +1,17 @@
 from rest_framework import serializers
-from .models import MilkSupplyRecord, MilkSaleRecord, PaymentRecord
+from .models import MilkSupplyRecord, MilkSaleRecord, PaymentRecord, Expense, MilkLoss
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    site_name = serializers.CharField(source='site.name', read_only=True)
+    class Meta:
+        model = Expense
+        fields = ['id', 'site', 'site_name', 'category', 'amount', 'description', 'date']
+
+class MilkLossSerializer(serializers.ModelSerializer):
+    site_name = serializers.CharField(source='site.name', read_only=True)
+    class Meta:
+        model = MilkLoss
+        fields = ['id', 'site', 'site_name', 'litres', 'reason', 'date']
 
 class MilkSupplyRecordSerializer(serializers.ModelSerializer):
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)

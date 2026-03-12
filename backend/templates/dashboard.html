@@ -5,8 +5,57 @@
 {% block header_title %}Welcome, {{ user.username }}{% endblock %}
 
 {% block content %}
-<!-- Quick Stats Row (Today) -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div x-data="{ expenseOpen: false, lossOpen: false }">
+    <!-- Quick Stats Row (Today) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <!-- ... existing stat cards ... -->
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-4 mb-8">
+        <button @click="expenseOpen = true" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-100">
+            <i data-lucide="receipt"></i> Record Expense
+        </button>
+        <button @click="lossOpen = true" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-100">
+            <i data-lucide="droplet"></i> Report Milk Loss
+        </button>
+    </div>
+
+    <!-- Expense Modal -->
+    <div x-show="expenseOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-gray-500 opacity-75" @click="expenseOpen = false"></div>
+            <div class="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                <h3 class="text-2xl font-black text-gray-900 mb-6">Record Site Expense</h3>
+                <form action="{% url 'expense_add' %}" method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    {{ expense_form.as_p }}
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" @click="expenseOpen = false" class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl">Cancel</button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg">Save Expense</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loss Modal -->
+    <div x-show="lossOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-gray-500 opacity-75" @click="lossOpen = false"></div>
+            <div class="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                <h3 class="text-2xl font-black text-gray-900 mb-6">Report Milk Loss</h3>
+                <form action="{% url 'loss_add' %}" method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    {{ loss_form.as_p }}
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" @click="lossOpen = false" class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl">Cancel</button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg">Report Loss</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
         <div class="flex items-center justify-between mb-4">
             <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
@@ -45,11 +94,24 @@
             <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
                 <i data-lucide="alert-circle" class="w-6 h-6"></i>
             </div>
-            <span class="text-red-500 text-xs font-bold uppercase">{{ quality_issues_count }} Issues</span>
+            <span class="text-red-500 text-xs font-bold uppercase">Today</span>
         </div>
-        <h3 class="text-gray-500 text-sm font-medium">Active Suppliers</h3>
-        <p class="text-2xl font-bold text-gray-800">{{ active_suppliers_count }}</p>
+        <h3 class="text-gray-500 text-sm font-medium">Inventory Loss</h3>
+        <p class="text-2xl font-bold text-gray-800">{{ loss_today }} L</p>
     </div>
+
+    {% if can_see_revenue %}
+    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
+                <i data-lucide="receipt" class="w-6 h-6"></i>
+            </div>
+            <span class="text-orange-500 text-xs font-bold uppercase">Today</span>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium">Daily Expenses</h3>
+        <p class="text-2xl font-bold text-gray-800">RWF {{ expenses_today }}</p>
+    </div>
+    {% endif %}
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - {{ owner.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { background: white; }
+            .print-border { border: 1px solid #e2e8f0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-12 rounded-[2rem] shadow-sm print-border">
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-12">
+            <div>
+                <h1 class="text-4xl font-black text-blue-600 mb-2">MilkFlow</h1>
+                <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Quality Milk Wholesale</p>
+            </div>
+            <div class="text-right">
+                <h2 class="text-2xl font-bold text-gray-800">{{ title }}</h2>
+                <p class="text-gray-500">Date: {{ today|date:"M d, Y" }}</p>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="grid grid-cols-2 gap-12 mb-12 pb-12 border-b border-gray-100">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Statement For:</p>
+                <h3 class="text-xl font-bold text-gray-900">{{ owner.name }}</h3>
+                <p class="text-gray-500">{{ owner.contact }}</p>
+                {% if owner.site %}<p class="text-gray-500">Collection Site: {{ owner.site.name }}</p>{% endif %}
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Summary:</p>
+                <div class="space-y-1">
+                    <p class="text-gray-600">Total Volume: <span class="font-bold text-gray-900">{{ total_litres }} L</span></p>
+                    <p class="text-gray-600">Total Value: <span class="font-bold text-blue-600">RWF {{ total_value }}</span></p>
+                    <p class="text-gray-600">Current Balance: <span class="font-bold text-gray-900">RWF {{ owner.current_balance }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <table class="w-full text-left mb-12">
+            <thead>
+                <tr class="border-b-2 border-gray-100">
+                    <th class="py-4 font-bold text-gray-400 uppercase text-xs">Date</th>
+                    <th class="py-4 font-bold text-gray-400 uppercase text-xs">Description</th>
+                    <th class="py-4 font-bold text-gray-400 uppercase text-xs text-center">Volume</th>
+                    <th class="py-4 font-bold text-gray-400 uppercase text-xs text-right">Value (RWF)</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for record in records %}
+                <tr>
+                    <td class="py-4 text-gray-600">{{ record.date|date:"Y-m-d" }}</td>
+                    <td class="py-4 text-gray-800 font-medium">Milk Delivery/Purchase</td>
+                    <td class="py-4 text-center font-bold text-gray-900">{{ record.litres }} L</td>
+                    <td class="py-4 text-right font-bold text-blue-600">{{ record.total_cost|default:record.total_revenue }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Footer -->
+        <div class="text-center pt-12 border-t border-gray-100">
+            <p class="text-gray-400 text-sm">Thank you for being a valued partner of MilkFlow.</p>
+            <p class="text-[10px] text-gray-300 mt-2 italic">This is an electronically generated statement.</p>
+        </div>
+
+        <!-- Print Button -->
+        <div class="mt-12 flex justify-center no-print">
+            <button onclick="window.print()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                Print Statement
+            </button>
+        </div>
+    </div>
+</body>
+</html>
