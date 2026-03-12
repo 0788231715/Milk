@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import (
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from core.views import LandingPageView, JoinRequestView, JoinRequestListView, process_join_request, supplier_report, buyer_report, DashboardView, UserProfileView, UserPasswordChangeView, login_success, SupplierListView, CreateSupplierView, SupplierUpdateView, SupplierDeleteView, BuyerListView, CreateBuyerView, BuyerUpdateView, BuyerDeleteView, WorkerListView, CreateWorkerView, WorkerDeleteView, pay_worker, ManagerListView, ManagerCreateView, ManagerDeleteView, TransactionListView, RecordSupplyView, RecordSaleView, SiteListView, SiteDetailView, SaveMilkRecordView, ChatView, NotificationListView, TrainingView, TrainingResourceCreateView, TrainingResourceDeleteView
+from core.views import LandingPageView, JoinRequestView, JoinRequestListView, process_join_request, supplier_report, buyer_report, DashboardView, UserProfileView, UserPasswordChangeView, login_success, SupplierListView, CreateSupplierView, SupplierUpdateView, SupplierDeleteView, BuyerListView, CreateBuyerView, BuyerUpdateView, BuyerDeleteView, WorkerListView, CreateWorkerView, WorkerDeleteView, pay_worker, ManagerListView, ManagerCreateView, ManagerDeleteView, TransactionListView, RecordSupplyView, RecordSaleView, SiteListView, SiteDetailView, SaveMilkRecordView, ExpenseCreateView, MilkLossCreateView, ChatView, NotificationListView, TrainingView, TrainingResourceCreateView, TrainingResourceDeleteView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
