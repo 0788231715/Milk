@@ -6,11 +6,6 @@
 
 {% block content %}
 <div x-data="{ expenseOpen: false, lossOpen: false }">
-    <!-- Quick Stats Row (Today) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <!-- ... existing stat cards ... -->
-    </div>
-
     <!-- Action Buttons -->
     <div class="flex gap-4 mb-8">
         <button @click="expenseOpen = true" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-100">
@@ -19,6 +14,77 @@
         <button @click="lossOpen = true" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-100">
             <i data-lucide="droplet"></i> Report Milk Loss
         </button>
+    </div>
+
+    <!-- Quick Stats Row (Today) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                    <i data-lucide="droplets" class="w-6 h-6"></i>
+                </div>
+                <span class="text-blue-500 text-xs font-bold uppercase">Today</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Milk Collected</h3>
+            <p class="text-2xl font-black text-gray-800">{{ milk_today }} L</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
+                    <i data-lucide="trending-up" class="w-6 h-6"></i>
+                </div>
+                <span class="text-green-500 text-xs font-bold uppercase">Today</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Daily Revenue</h3>
+            <p class="text-2xl font-black text-gray-800">{% if revenue_today == "Restricted" %}---{% else %}RWF {{ revenue_today }}{% endif %}</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                </div>
+                <span class="text-indigo-500 text-xs font-bold uppercase">Today</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Daily Profit</h3>
+            <p class="text-2xl font-black text-gray-800">{% if profit_today == "Restricted" %}---{% else %}RWF {{ profit_today }}{% endif %}</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <span class="text-purple-500 text-xs font-bold uppercase">Today</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Active Suppliers</h3>
+            <p class="text-2xl font-black text-gray-800">{{ active_suppliers_count }}</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                </div>
+                <span class="text-red-500 text-xs font-bold uppercase">Today</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Inventory Loss</h3>
+            <p class="text-2xl font-black text-gray-800">{{ loss_today }} L</p>
+        </div>
+
+        {% if can_see_revenue %}
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
+                    <i data-lucide="receipt" class="w-6 h-6"></i>
+                </div>
+                <span class="text-orange-500 text-xs font-bold uppercase">Today</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Daily Expenses</h3>
+            <p class="text-2xl font-black text-gray-800">RWF {{ expenses_today }}</p>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Expense Modal -->
@@ -56,77 +122,54 @@
             </div>
         </div>
     </div>
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
-                <i data-lucide="droplets" class="w-6 h-6"></i>
-            </div>
-            <span class="text-blue-500 text-xs font-bold uppercase">Today</span>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Milk Collected</h3>
-        <p class="text-2xl font-bold text-gray-800">{{ milk_today }} L</p>
-    </div>
-
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
-                <i data-lucide="trending-up" class="w-6 h-6"></i>
-            </div>
-            <span class="text-green-500 text-xs font-bold uppercase">Today</span>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Daily Revenue</h3>
-        <p class="text-2xl font-bold text-gray-800">RWF {{ revenue_today }}</p>
-    </div>
-
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
-                <i data-lucide="wallet" class="w-6 h-6"></i>
-            </div>
-            <span class="text-indigo-500 text-xs font-bold uppercase">Today</span>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Daily Profit</h3>
-        <p class="text-2xl font-bold text-gray-800">RWF {{ profit_today }}</p>
-    </div>
-
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
-                <i data-lucide="alert-circle" class="w-6 h-6"></i>
-            </div>
-            <span class="text-red-500 text-xs font-bold uppercase">Today</span>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Inventory Loss</h3>
-        <p class="text-2xl font-bold text-gray-800">{{ loss_today }} L</p>
-    </div>
-
-    {% if can_see_revenue %}
-    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
-                <i data-lucide="receipt" class="w-6 h-6"></i>
-            </div>
-            <span class="text-orange-500 text-xs font-bold uppercase">Today</span>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Daily Expenses</h3>
-        <p class="text-2xl font-bold text-gray-800">RWF {{ expenses_today }}</p>
-    </div>
-    {% endif %}
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Pending Join Requests (For Super Admin) -->
+    {% if user.role == 'SUPER_ADMIN' %}
+    <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm overflow-hidden animate-on-load">
+        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <i data-lucide="user-plus" class="text-indigo-600 w-5 h-5"></i>
+            Join Requests
+        </h3>
+        <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+            {% for req in pending_requests %}
+            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-indigo-200 transition-all">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="font-bold text-gray-800">{{ req.name }}</p>
+                        <p class="text-xs text-gray-500">{{ req.phone }}</p>
+                    </div>
+                    <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full">{{ req.request_type }}</span>
+                </div>
+                <p class="text-xs text-gray-600 mb-4 line-clamp-2">"{{ req.message|default:'No message' }}"</p>
+                <div class="flex gap-2">
+                    <a href="{% url 'process_join_request' req.id 'accept' %}" class="flex-1 bg-green-600 text-white text-xs font-bold py-2 rounded-lg text-center hover:bg-green-700 transition-all">Approve</a>
+                    <a href="{% url 'process_join_request' req.id 'reject' %}" class="flex-1 bg-gray-200 text-gray-600 text-xs font-bold py-2 rounded-lg text-center hover:bg-gray-300 transition-all">Ignore</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-8">
+                <i data-lucide="inbox" class="w-12 h-12 text-gray-200 mx-auto mb-2"></i>
+                <p class="text-gray-400 text-sm italic">No pending requests</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Site Performance -->
-    <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+    <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm animate-on-load">
         <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
             <i data-lucide="map-pin" class="text-blue-600 w-5 h-5"></i>
-            Site Performance (Today)
+            Site Performance
         </h3>
         <div class="space-y-6">
             {% for site in site_stats %}
             <div class="site-row">
                 <div class="flex justify-between mb-2">
-                    <span class="font-semibold text-gray-700">{{ site.name }}</span>
-                    <span class="text-blue-600 font-bold">{{ site.collected }} L</span>
+                    <span class="font-semibold text-gray-700 text-sm">{{ site.name }}</span>
+                    <span class="text-blue-600 font-bold text-sm">{{ site.collected }} L</span>
                 </div>
                 <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                     <div class="bg-blue-500 h-full site-progress" style="width: 0%" data-val="{{ site.collected }}"></div>
@@ -136,38 +179,63 @@
         </div>
     </div>
 
-    <!-- Period Reports (Charts) -->
-    <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Weekly Trends Chart -->
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <div class="flex justify-between items-start mb-6">
+    <!-- Recent Notifications -->
+    <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm animate-on-load">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i data-lucide="bell" class="text-orange-600 w-5 h-5"></i>
+                Alerts
+            </h3>
+            <a href="{% url 'notification_list' %}" class="text-xs text-blue-600 font-bold hover:underline">View All</a>
+        </div>
+        <div class="space-y-4">
+            {% for note in unread_notifications %}
+            <div class="flex gap-4 p-3 hover:bg-gray-50 rounded-xl transition-all">
+                <div class="w-2 h-2 mt-2 rounded-full bg-blue-600 shrink-0"></div>
                 <div>
-                    <h3 class="text-xl font-bold text-gray-800">Weekly Trends</h3>
-                    <p class="text-sm text-gray-400">Milk vs Revenue</p>
-                </div>
-                <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl">
-                    <i data-lucide="trending-up" class="w-6 h-6"></i>
+                    <p class="text-sm font-bold text-gray-800">{{ note.title }}</p>
+                    <p class="text-xs text-gray-500">{{ note.created_at|timesince }} ago</p>
                 </div>
             </div>
-            <div class="h-64">
-                <canvas id="weeklyChart"></canvas>
+            {% empty %}
+            <div class="text-center py-8">
+                <p class="text-gray-400 text-sm italic">All caught up!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Weekly Trends Chart -->
+    <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm animate-on-load">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">Weekly Trends</h3>
+                <p class="text-sm text-gray-400">Milk vs Revenue</p>
+            </div>
+            <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                <i data-lucide="trending-up" class="w-6 h-6"></i>
             </div>
         </div>
+        <div class="h-64">
+            <canvas id="weeklyChart"></canvas>
+        </div>
+    </div>
 
-        <!-- Monthly Performance Chart -->
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-800">Monthly Performance</h3>
-                    <p class="text-sm text-gray-400">Profit Distribution</p>
-                </div>
-                <div class="p-3 bg-purple-50 text-purple-600 rounded-2xl">
-                    <i data-lucide="pie-chart" class="w-6 h-6"></i>
-                </div>
+    <!-- Monthly Performance Chart -->
+    <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm animate-on-load">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">Monthly Performance</h3>
+                <p class="text-sm text-gray-400">Profit Distribution</p>
             </div>
-            <div class="h-64">
-                <canvas id="monthlyChart"></canvas>
+            <div class="p-3 bg-purple-50 text-purple-600 rounded-2xl">
+                <i data-lucide="pie-chart" class="w-6 h-6"></i>
             </div>
+        </div>
+        <div class="h-64">
+            <canvas id="monthlyChart"></canvas>
         </div>
     </div>
 </div>
@@ -192,7 +260,8 @@
             opacity: 0,
             duration: 0.8,
             stagger: 0.1,
-            ease: "power3.out"
+            ease: "power3.out",
+            clearProps: "all" // This ensures GSAP doesn't leave any inline styles that might hide the cards
         });
 
         // Weekly Trends Chart

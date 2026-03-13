@@ -22,3 +22,9 @@ class WorkerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Worker
         fields = '__all__'
+
+from .models import JoinRequest
+class JoinRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JoinRequest
+        fields = '__all__'

@@ -126,11 +126,11 @@ class LandingPageView(TemplateView):
         return context
 
 class JoinRequestView(CreateView):
-    model = JoinRequest; fields = ['name', 'phone', 'email', 'request_type', 'message']; template_name = "home.html"; success_url = reverse_lazy('home')
+    model = JoinRequest; fields = ['name', 'phone', 'email', 'password', 'request_type', 'message']; template_name = "home.html"; success_url = reverse_lazy('home')
     def form_valid(self, form):
         obj = form.save(); admins = User.objects.filter(role='SUPER_ADMIN')
-        for admin in admins: Notification.objects.create(user=admin, title=f"New {obj.request_type} Request", message=f"{obj.name} wants to join. Phone: {obj.phone}", link="/join-requests/")
-        messages.success(self.request, "Sent!"); return super().form_valid(form)
+        for admin in admins: Notification.objects.create(user=admin, title=f"New {obj.request_type} Request", message=f"{obj.name} wants to join. Phone: {obj.phone}", link="/dashboard/")
+        messages.success(self.request, "Partnership request sent successfully! We will review it soon."); return super().form_valid(form)
 
 class JoinRequestListView(LoginRequiredMixin, ListView):
     model = JoinRequest; template_name = "join_requests.html"; context_object_name = "requests"; login_url = "/admin/login/"
@@ -145,14 +145,15 @@ def process_join_request(request, pk, action):
         username = join_req.name.lower().replace(' ', '_')
         if User.objects.filter(username=username).exists(): username = f"{username}_{timezone.now().strftime('%M%S')}"
         role = User.SUPPLIER if join_req.request_type == 'SUPPLIER' else User.BUYER
-        user = User.objects.create_user(username=username, email=join_req.email, password='Password123', role=role)
+        # Create user with the password they chose in the request
+        user = User.objects.create_user(username=username, email=join_req.email, password=join_req.password, role=role)
         user.is_staff = True; user.save()
         if role == User.SUPPLIER: Supplier.objects.create(user=user, name=join_req.name, contact=join_req.phone)
         else: Buyer.objects.create(user=user, name=join_req.name, contact=join_req.phone)
         join_req.status = 'APPROVED'; join_req.save()
-        messages.success(request, f"Approved! User: {username}, Pass: Password123")
-    else: join_req.status = 'REJECTED'; join_req.save(); messages.info(request, "Ignored.")
-    return redirect('join_request_list')
+        messages.success(request, f"Approved! User: {username} can now login with their chosen password.")
+    else: join_req.status = 'REJECTED'; join_req.save(); messages.info(request, "Request ignored.")
+    return redirect('dashboard')
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard.html"; login_url = "/admin/login/"
@@ -163,13 +164,25 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         can_see_revenue = (user.role == User.SUPER_ADMIN)
         if user.role == User.MANAGER:
             perms = getattr(user, 'manager_permissions', None); can_see_revenue = perms.can_see_revenue if perms else False
+        
         context.update({'can_see_revenue': can_see_revenue, 'milk_today': supply_qs.filter(date__date=today).aggregate(Sum('litres'))['litres__sum'] or 0, 'loss_today': loss_qs.filter(date=today).aggregate(Sum('litres'))['litres__sum'] or 0})
+        
         if can_see_revenue:
             context.update({'revenue_today': sale_qs.filter(date__date=today).aggregate(Sum('total_revenue'))['total_revenue__sum'] or 0, 'cost_today': supply_qs.filter(date__date=today).aggregate(Sum('total_cost'))['total_cost__sum'] or 0, 'expenses_today': expense_qs.filter(date=today).aggregate(Sum('amount'))['amount__sum'] or 0})
             context['profit_today'] = context['revenue_today'] - (context['cost_today'] + context['expenses_today'])
             context['revenue_month'] = sale_qs.filter(date__date__gte=month_start).aggregate(Sum('total_revenue'))['total_revenue__sum'] or 0
         else: context.update({'revenue_today': "Restricted", 'profit_today': "Restricted", 'revenue_month': 0})
-        context.update({'milk_week': supply_qs.filter(date__date__gte=week_start).aggregate(Sum('litres'))['litres__sum'] or 0, 'milk_month': supply_qs.filter(date__date__gte=month_start).aggregate(Sum('litres'))['litres__sum'] or 0, 'active_suppliers_count': supply_qs.filter(date__date=today).values('supplier').distinct().count(), 'expense_form': ExpenseForm(), 'loss_form': MilkLossForm()})
+        
+        context.update({
+            'milk_week': supply_qs.filter(date__date__gte=week_start).aggregate(Sum('litres'))['litres__sum'] or 0, 
+            'milk_month': supply_qs.filter(date__date__gte=month_start).aggregate(Sum('litres'))['litres__sum'] or 0, 
+            'active_suppliers_count': supply_qs.filter(date__date=today).values('supplier').distinct().count(), 
+            'expense_form': ExpenseForm(), 
+            'loss_form': MilkLossForm(),
+            'pending_requests': JoinRequest.objects.filter(status='PENDING').order_by('-created_at') if user.role == User.SUPER_ADMIN else [],
+            'unread_notifications': Notification.objects.filter(user=user, is_read=False).order_by('-created_at')[:5]
+        })
+        
         site_stats = []
         for site in Site.objects.all():
             collected = supply_qs.filter(site=site, date__date=today).aggregate(Sum('litres'))['litres__sum'] or 0

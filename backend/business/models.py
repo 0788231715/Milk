@@ -51,6 +51,7 @@ class JoinRequest(models.Model):
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20)
     email = models.EmailField(blank=True)
+    password = models.CharField(max_length=128, help_text="User's chosen password", null=True, blank=True)
     request_type = models.CharField(max_length=10, choices=TYPES)
     message = models.TextField(blank=True)
     status = models.CharField(max_length=20, default='PENDING', choices=[('PENDING', 'Pending'), ('APPROVED', 'Approved'), ('REJECTED', 'Rejected')])
