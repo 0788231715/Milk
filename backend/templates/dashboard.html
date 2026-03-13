@@ -5,14 +5,20 @@
 {% block header_title %}Welcome, {{ user.username }}{% endblock %}
 
 {% block content %}
-<div x-data="{ expenseOpen: false, lossOpen: false }">
+<div x-data="{ expenseOpen: false, lossOpen: false, paymentOpen: false, loanOpen: false }">
     <!-- Action Buttons -->
-    <div class="flex gap-4 mb-8">
+    <div class="flex flex-wrap gap-4 mb-8">
         <button @click="expenseOpen = true" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-100">
             <i data-lucide="receipt"></i> Record Expense
         </button>
         <button @click="lossOpen = true" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-100">
             <i data-lucide="droplet"></i> Report Milk Loss
+        </button>
+        <button @click="paymentOpen = true" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-green-100">
+            <i data-lucide="credit-card"></i> Record Payment
+        </button>
+        <button @click="loanOpen = true" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-indigo-100">
+            <i data-lucide="hand-coins"></i> Give Loan
         </button>
     </div>
 
@@ -26,7 +32,7 @@
                 <span class="text-blue-500 text-xs font-bold uppercase">Today</span>
             </div>
             <h3 class="text-gray-500 text-sm font-medium">Milk Collected</h3>
-            <p class="text-2xl font-black text-gray-800">{{ milk_today }} L</p>
+            <p class="text-2xl font-black text-gray-800">{{ milk_today|floatformat:1 }} L</p>
         </div>
 
         <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all stat-card">
@@ -117,6 +123,42 @@
                     <div class="pt-4 flex gap-3">
                         <button type="button" @click="lossOpen = false" class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl">Cancel</button>
                         <button type="submit" class="flex-1 px-4 py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg">Report Loss</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div x-show="paymentOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-gray-500 opacity-75" @click="paymentOpen = false"></div>
+            <div class="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                <h3 class="text-2xl font-black text-gray-900 mb-6">Record Payment</h3>
+                <form action="{% url 'payment_add' %}" method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    {{ payment_form.as_p }}
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" @click="paymentOpen = false" class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl">Cancel</button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg">Save Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan Modal -->
+    <div x-show="loanOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-gray-500 opacity-75" @click="loanOpen = false"></div>
+            <div class="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                <h3 class="text-2xl font-black text-gray-900 mb-6">Record Buyer Loan/Credit</h3>
+                <form action="{% url 'loan_add' %}" method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    {{ loan_form.as_p }}
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" @click="loanOpen = false" class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl">Cancel</button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg">Save Loan</button>
                     </div>
                 </form>
             </div>

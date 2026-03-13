@@ -173,46 +173,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMainStats() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)]),
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [BoxShadow(color: const Color(0xFF2563EB).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Total Intake Today', style: TextStyle(color: Colors.white70, fontSize: 14)),
-              const Icon(LucideIcons.droplet, color: Colors.white, size: 20),
-            ],
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)]),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [BoxShadow(color: const Color(0xFF2563EB).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
           ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Column(
             children: [
-              Text('${_data?['milk_today'] ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8, left: 4),
-                child: Text('Liters', style: TextStyle(color: Colors.white70, fontSize: 16)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Intake Today', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const Icon(LucideIcons.droplet, color: Colors.white, size: 20),
+                ],
               ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('${_data?['milk_today'] ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8, left: 4),
+                    child: Text('Liters', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Divider(color: Colors.white24),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildSmallWhiteStat('Profit Today', 'RWF ${_data?['profit_today'] ?? 0}'),
+                  _buildSmallWhiteStat('Loss', '${_data?['loss_today'] ?? 0} L'),
+                ],
+              )
             ],
           ),
-          const SizedBox(height: 24),
-          const Divider(color: Colors.white24),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildSmallWhiteStat('Active Sites', '${(_data?['site_stats'] as List?)?.length ?? 0}'),
-              _buildSmallWhiteStat('Suppliers', '${_data?['active_suppliers_count'] ?? 0}'),
-              _buildSmallWhiteStat('Loss', '${_data?['loss_today'] ?? 0} L'),
-            ],
-          )
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        _buildRevenueCards(),
+      ],
     );
   }
 

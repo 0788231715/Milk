@@ -35,44 +35,40 @@ class SiteDetailView(LoginRequiredMixin, DetailView):
         except ValueError: year, month = today.year, today.month
         prev_month, prev_year = (month - 1 if month > 1 else 12), (year if month > 1 else year - 1)
         next_month, next_year = (month + 1 if month < 12 else 1), (year if month < 12 else year + 1)
-        suppliers = self.object.suppliers.all().order_by('name'); buyers = Buyer.objects.all().order_by('name'); _, num_days = calendar.monthrange(year, month); days = list(range(1, num_days + 1))
+        suppliers = self.object.suppliers.all().order_by('name'); _, num_days = calendar.monthrange(year, month); days = list(range(1, num_days + 1))
         records = MilkSupplyRecord.objects.filter(site=self.object, date__year=year, date__month=month); data_map = {}
         for r in records:
             if r.supplier_id not in data_map: data_map[r.supplier_id] = {}
             data_map[r.supplier_id][r.date.day] = float(r.litres)
         
-        sale_records = MilkSaleRecord.objects.filter(site_source=self.object, date__year=year, date__month=month); sale_map = {}
-        for r in sale_records:
-            if r.buyer_id not in sale_map: sale_map[r.buyer_id] = {}
-            sale_map[r.buyer_id][r.date.day] = float(r.litres)
-
         supplier_data = []
         for s in suppliers:
             day_values = []
+            row_total_l = 0
             for day in days:
                 can_edit = True
                 if user.role == User.MANAGER:
                     perms = getattr(user, 'manager_permissions', None); is_today = (year == today.year and month == today.month and day == today.day)
                     if not is_today: can_edit = perms.can_edit_past_dates if perms else False
                 elif user.role != User.SUPER_ADMIN: can_edit = False
-                day_values.append({'day': day, 'litres': data_map.get(s.id, {}).get(day, ''), 'can_edit': can_edit})
-            supplier_data.append({'id': s.id, 'name': s.name, 'days': day_values})
+                
+                val = data_map.get(s.id, {}).get(day, '')
+                day_values.append({'day': day, 'litres': val, 'can_edit': can_edit})
+                if val != '': row_total_l += float(val)
+            
+            # Month-specific financials
+            row_gross = MilkSupplyRecord.objects.filter(supplier=s, date__year=year, date__month=month).aggregate(Sum('total_cost'))['total_cost__sum'] or 0
+            row_loans = Loan.objects.filter(supplier=s, date_given__year=year, date_given__month=month).aggregate(Sum('amount'))['amount__sum'] or 0
+            
+            supplier_data.append({
+                'id': s.id, 'name': s.name, 'days': day_values,
+                'total_l': row_total_l, 'gross': row_gross, 'loans': row_loans, 'net': float(row_gross) - float(row_loans)
+            })
 
-        buyer_data = []
-        for b in buyers:
-            day_values = []
-            for day in days:
-                can_edit = True
-                if user.role == User.MANAGER:
-                    perms = getattr(user, 'manager_permissions', None); is_today = (year == today.year and month == today.month and day == today.day)
-                    if not is_today: can_edit = perms.can_edit_past_dates if perms else False
-                elif user.role != User.SUPER_ADMIN: can_edit = False
-                day_values.append({'day': day, 'litres': sale_map.get(b.id, {}).get(day, ''), 'can_edit': can_edit})
-            buyer_data.append({'id': b.id, 'name': b.name, 'days': day_values})
-
-        context.update({'supplier_data': supplier_data, 'buyer_data': buyer_data, 'days': days, 'month_name': calendar.month_name[month], 'current_year': year, 'current_month': month, 'prev_month': prev_month, 'prev_year': prev_year, 'next_month': next_month, 'next_year': next_year, 'today_day': today.day if today.year == year and today.month == month else 0})
+        context.update({'supplier_data': supplier_data, 'days': days, 'month_name': calendar.month_name[month], 'current_year': year, 'current_month': month, 'prev_month': prev_month, 'prev_year': prev_year, 'next_month': next_month, 'next_year': next_year, 'today_day': today.day if today.year == year and today.month == month else 0})
         return context
 
+from decimal import Decimal
 @method_decorator(csrf_exempt, name='dispatch')
 class SaveMilkRecordView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
@@ -80,6 +76,14 @@ class SaveMilkRecordView(LoginRequiredMixin, TemplateView):
         if user.role not in [User.SUPER_ADMIN, User.MANAGER]: return JsonResponse({'status': 'error', 'message': 'Denied'}, status=403)
         try:
             data = json.loads(request.body); supplier_id, buyer_id, site_id, day, month, year, litres = data.get('supplier_id'), data.get('buyer_id'), data.get('site_id'), int(data.get('day')), int(data.get('month')), int(data.get('year')), data.get('litres')
+            
+            # For Buyer grid, if no site_id is passed, try to use manager's site or first site
+            if not site_id and buyer_id:
+                if user.role == User.MANAGER and hasattr(user, 'manager_permissions') and user.manager_permissions.assigned_site:
+                    site_id = user.manager_permissions.assigned_site.id
+                else:
+                    site_id = Site.objects.first().id
+
             if user.role == User.MANAGER:
                 today = timezone.now().date()
                 if not (year == today.year and month == today.month and day == today.day):
@@ -89,21 +93,50 @@ class SaveMilkRecordView(LoginRequiredMixin, TemplateView):
             date_obj = timezone.make_aware(timezone.datetime(year, month, day))
             
             if supplier_id:
-                record = MilkSupplyRecord.objects.filter(supplier_id=supplier_id, site_id=site_id, date__year=year, date__month=month, date__day=day).first()
+                supplier = get_object_or_404(Supplier, id=supplier_id)
+                record = MilkSupplyRecord.objects.filter(supplier_id=supplier_id, site_id=site_id, date__date=date_obj.date()).first()
+                
+                old_cost = record.total_cost if record else 0
                 if litres is None or litres == '' or float(litres) == 0:
-                    if record: record.delete()
+                    if record:
+                        supplier.current_balance -= old_cost
+                        supplier.save()
+                        record.delete()
                     return JsonResponse({'status': 'deleted'})
-                if not record: record = MilkSupplyRecord(supplier_id=supplier_id, site_id=site_id, date=date_obj, price_per_litre=500)
-                record.litres = float(litres); record.save()
+                
+                if not record:
+                    record = MilkSupplyRecord(supplier_id=supplier_id, site_id=site_id, date=date_obj, price_per_litre=supplier.default_price_per_litre)
+                
+                record.litres = Decimal(str(litres))
+                record.save() 
+                
+                # Update balance: remove old, add new
+                supplier.current_balance = (supplier.current_balance - old_cost) + record.total_cost
+                supplier.save()
                 return JsonResponse({'status': 'success', 'total': float(record.total_cost)})
             
             elif buyer_id:
-                record = MilkSaleRecord.objects.filter(buyer_id=buyer_id, site_source_id=site_id, date__year=year, date__month=month, date__day=day).first()
+                buyer = get_object_or_404(Buyer, id=buyer_id)
+                # Lookup sale record without site filter
+                record = MilkSaleRecord.objects.filter(buyer_id=buyer_id, date__date=date_obj.date()).first()
+                
+                old_revenue = record.total_revenue if record else 0
                 if litres is None or litres == '' or float(litres) == 0:
-                    if record: record.delete()
+                    if record:
+                        buyer.current_balance -= old_revenue
+                        buyer.save()
+                        record.delete()
                     return JsonResponse({'status': 'deleted'})
-                if not record: record = MilkSaleRecord(buyer_id=buyer_id, site_source_id=site_id, date=date_obj, price_per_litre=600)
-                record.litres = float(litres); record.save()
+                
+                if not record:
+                    record = MilkSaleRecord(buyer_id=buyer_id, date=date_obj, price_per_litre=buyer.default_price_per_litre)
+                
+                record.litres = Decimal(str(litres))
+                record.save() 
+                
+                # Update balance
+                buyer.current_balance = (buyer.current_balance - old_revenue) + record.total_revenue
+                buyer.save()
                 return JsonResponse({'status': 'success', 'total': float(record.total_revenue)})
 
             return JsonResponse({'status': 'error', 'message': 'Missing ID'}, status=400)
@@ -191,6 +224,9 @@ def process_join_request(request, pk, action):
     else: join_req.status = 'REJECTED'; join_req.save(); messages.info(request, "Request ignored.")
     return redirect('dashboard')
 
+from transactions.forms import MilkSupplyForm, MilkSaleForm, ExpenseForm, MilkLossForm, PaymentForm, BuyerLoanForm
+from transactions.models import MilkSupplyRecord, MilkSaleRecord, Expense, MilkLoss, PaymentRecord, BuyerLoan, Loan
+
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard.html"; login_url = "/admin/login/"
     def get_context_data(self, **kwargs):
@@ -215,6 +251,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'active_suppliers_count': supply_qs.filter(date__date=today).values('supplier').distinct().count(), 
             'expense_form': ExpenseForm(), 
             'loss_form': MilkLossForm(),
+            'payment_form': PaymentForm(),
+            'loan_form': BuyerLoanForm(),
             'pending_requests': JoinRequest.objects.filter(status='PENDING').order_by('-created_at') if user.role == User.SUPER_ADMIN else [],
             'unread_notifications': Notification.objects.filter(user=user, is_read=False).order_by('-created_at')[:5]
         })
@@ -224,6 +262,16 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             collected = supply_qs.filter(site=site, date__date=today).aggregate(Sum('litres'))['litres__sum'] or 0
             site_stats.append({'id': site.id, 'name': site.name, 'collected': float(collected)})
         context['site_stats'] = site_stats; return context
+
+class PaymentCreateView(LoginRequiredMixin, CreateView):
+    model = PaymentRecord; form_class = PaymentForm; success_url = reverse_lazy('dashboard')
+    def form_valid(self, form):
+        messages.success(self.request, "Payment recorded successfully!"); return super().form_valid(form)
+
+class BuyerLoanCreateView(LoginRequiredMixin, CreateView):
+    model = BuyerLoan; form_class = BuyerLoanForm; success_url = reverse_lazy('dashboard')
+    def form_valid(self, form):
+        messages.success(self.request, "Loan recorded successfully!"); return super().form_valid(form)
 
 class DashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -398,7 +446,7 @@ class SupplierListView(LoginRequiredMixin, ListView):
         context['sites'] = sites; return context
 
 class CreateSupplierView(LoginRequiredMixin, CreateView):
-    model = Supplier; fields = ['name', 'contact', 'site']; success_url = reverse_lazy('supplier_list')
+    model = Supplier; fields = ['name', 'contact', 'site', 'default_price_per_litre']; success_url = reverse_lazy('supplier_list')
     def form_valid(self, form):
         user = self.request.user
         if user.role == User.MANAGER:
@@ -412,7 +460,7 @@ class CreateSupplierView(LoginRequiredMixin, CreateView):
         messages.success(self.request, f"Supplier added! Username: {username}"); return super().form_valid(form)
 
 class SupplierUpdateView(LoginRequiredMixin, UpdateView):
-    model = Supplier; fields = ['name', 'contact', 'site']; template_name = "supplier_form.html"; success_url = reverse_lazy('supplier_list')
+    model = Supplier; fields = ['name', 'contact', 'site', 'default_price_per_litre']; template_name = "supplier_form.html"; success_url = reverse_lazy('supplier_list')
     def dispatch(self, request, *args, **kwargs):
         if request.user.role != User.SUPER_ADMIN: return redirect('supplier_list')
         return super().dispatch(request, *args, **kwargs)
@@ -425,9 +473,67 @@ class SupplierDeleteView(LoginRequiredMixin, DeleteView):
 
 class BuyerListView(LoginRequiredMixin, ListView):
     model = Buyer; template_name = "buyers.html"; context_object_name = "buyers"; login_url = "/admin/login/"
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs); user, today = self.request.user, timezone.now().date()
+        try: year, month = int(self.request.GET.get('year', today.year)), int(self.request.GET.get('month', today.month))
+        except ValueError: year, month = today.year, today.month
+        prev_month, prev_year = (month - 1 if month > 1 else 12), (year if month > 1 else year - 1)
+        next_month, next_year = (month + 1 if month < 12 else 1), (year if month < 12 else year + 1)
+        buyers = Buyer.objects.all().order_by('name'); _, num_days = calendar.monthrange(year, month); days = list(range(1, num_days + 1))
+        
+        records = MilkSaleRecord.objects.filter(date__year=year, date__month=month); data_map = {}
+        for r in records:
+            if r.buyer_id not in data_map: data_map[r.buyer_id] = {}
+            data_map[r.buyer_id][r.date.day] = float(r.litres)
+
+        buyer_data = []
+        for b in buyers:
+            day_values = []
+            row_total_l = 0
+            for day in days:
+                can_edit = True
+                if user.role == User.MANAGER:
+                    perms = getattr(user, 'manager_permissions', None); is_today = (year == today.year and month == today.month and day == today.day)
+                    if not is_today: can_edit = perms.can_edit_past_dates if perms else False
+                elif user.role != User.SUPER_ADMIN: can_edit = False
+                val = data_map.get(b.id, {}).get(day, '')
+                day_values.append({'day': day, 'litres': val, 'can_edit': can_edit})
+                if val != '': row_total_l += float(val)
+            
+            row_gross = records.filter(buyer=b).aggregate(Sum('total_revenue'))['total_revenue__sum'] or 0
+            row_loans = BuyerLoan.objects.filter(buyer=b, date_given__year=year, date_given__month=month).aggregate(Sum('amount'))['amount__sum'] or 0
+
+            buyer_data.append({
+                'id': b.id, 'name': b.name, 'days': day_values,
+                'total_l': row_total_l, 'gross': row_gross, 'loans': row_loans, 'net': float(row_gross) + float(row_loans)
+            })
+
+        # General monthly totals for cards
+        total_monthly_l = records.aggregate(Sum('litres'))['litres__sum'] or 0
+        total_monthly_rev = records.aggregate(Sum('total_revenue'))['total_revenue__sum'] or 0
+        total_monthly_loans = BuyerLoan.objects.filter(date_given__year=year, date_given__month=month).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        context.update({
+            'buyer_data': buyer_data, 
+            'days': days, 
+            'month_name': calendar.month_name[month], 
+            'current_year': year, 
+            'current_month': month, 
+            'prev_month': prev_month, 
+            'prev_year': prev_year, 
+            'next_month': next_month, 
+            'next_year': next_year, 
+            'today_day': today.day if today.year == year and today.month == month else 0, 
+            'sites': Site.objects.all(),
+            'total_monthly_l': total_monthly_l,
+            'total_monthly_rev': total_monthly_rev,
+            'total_monthly_loans': total_monthly_loans,
+            'total_net_due': float(total_monthly_rev) + float(total_monthly_loans)
+        })
+        return context
 
 class CreateBuyerView(LoginRequiredMixin, CreateView):
-    model = Buyer; fields = ['name', 'contact']; success_url = reverse_lazy('buyer_list')
+    model = Buyer; fields = ['name', 'contact', 'default_price_per_litre']; success_url = reverse_lazy('buyer_list')
     def form_valid(self, form):
         username = form.cleaned_data['name'].lower().replace(' ', '_'); 
         if User.objects.filter(username=username).exists(): username = f"{username}_{timezone.now().strftime('%M%S')}"
@@ -436,7 +542,7 @@ class CreateBuyerView(LoginRequiredMixin, CreateView):
         messages.success(self.request, f"Buyer added! Username: {username}"); return super().form_valid(form)
 
 class BuyerUpdateView(LoginRequiredMixin, UpdateView):
-    model = Buyer; fields = ['name', 'contact']; template_name = "buyer_form.html"; success_url = reverse_lazy('buyer_list')
+    model = Buyer; fields = ['name', 'contact', 'default_price_per_litre']; template_name = "buyer_form.html"; success_url = reverse_lazy('buyer_list')
     def dispatch(self, request, *args, **kwargs):
         if request.user.role != User.SUPER_ADMIN: return redirect('buyer_list')
         return super().dispatch(request, *args, **kwargs)

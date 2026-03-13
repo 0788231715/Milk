@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import (
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from core.views import LandingPageView, JoinRequestView, JoinRequestListView, process_join_request, supplier_report, buyer_report, DashboardView, UserProfileView, UserPasswordChangeView, login_success, SupplierListView, CreateSupplierView, SupplierUpdateView, SupplierDeleteView, BuyerListView, CreateBuyerView, BuyerUpdateView, BuyerDeleteView, WorkerListView, CreateWorkerView, WorkerDeleteView, pay_worker, ManagerListView, ManagerCreateView, ManagerDeleteView, TransactionListView, RecordSupplyView, RecordSaleView, SiteListView, SiteDetailView, SaveMilkRecordView, ExpenseCreateView, MilkLossCreateView, ChatView, NotificationListView, TrainingView, TrainingResourceCreateView, TrainingResourceDeleteView, UserProfileAPIView
+from core.views import LandingPageView, JoinRequestView, JoinRequestListView, process_join_request, supplier_report, buyer_report, DashboardView, UserProfileView, UserPasswordChangeView, login_success, SupplierListView, CreateSupplierView, SupplierUpdateView, SupplierDeleteView, BuyerListView, CreateBuyerView, BuyerUpdateView, BuyerDeleteView, WorkerListView, CreateWorkerView, WorkerDeleteView, pay_worker, ManagerListView, ManagerCreateView, ManagerDeleteView, TransactionListView, RecordSupplyView, RecordSaleView, SiteListView, SiteDetailView, SaveMilkRecordView, ExpenseCreateView, MilkLossCreateView, ChatView, NotificationListView, TrainingView, TrainingResourceCreateView, TrainingResourceDeleteView, UserProfileAPIView, PaymentCreateView, BuyerLoanCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -49,6 +49,8 @@ urlpatterns = [
     path('api/save-milk/', SaveMilkRecordView.as_view(), name='save_milk_record'),
     path('expenses/add/', ExpenseCreateView.as_view(), name='expense_add'),
     path('losses/add/', MilkLossCreateView.as_view(), name='loss_add'),
+    path('payments/add/', PaymentCreateView.as_view(), name='payment_add'),
+    path('loans/add/', BuyerLoanCreateView.as_view(), name='loan_add'),
     path('transactions/', TransactionListView.as_view(), name='transaction_list'),
     path('transactions/supply/new/', RecordSupplyView.as_view(), name='record_supply'),
     path('transactions/sales/new/', RecordSaleView.as_view(), name='record_sale'),

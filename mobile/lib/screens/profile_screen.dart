@@ -55,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     double totalLitres = 0;
     for (var r in _records) {
-      totalLitres += (r['litres'] as num).toDouble();
+      totalLitres += double.tryParse(r['litres']?.toString() ?? '0') ?? 0;
     }
 
     return Scaffold(
@@ -64,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildProfileCard(username, fullName, role),
+            _buildProfileCard(username, fullName, role, isSupplier, isBuyer),
             const SizedBox(height: 24),
             _buildStatsGrid(totalLitres, isSupplier, isBuyer),
             const SizedBox(height: 32),
@@ -75,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileCard(String username, String fullName, String role) {
+  Widget _buildProfileCard(String username, String fullName, String role, bool isSupplier, bool isBuyer) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -112,6 +112,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(20)),
                       child: Text(role, style: const TextStyle(color: Color(0xFF2563EB), fontSize: 10, fontWeight: FontWeight.bold)),
                     ),
+                    const SizedBox(height: 8),
+                    Text('Rate: RWF ${isSupplier || isBuyer ? _profile?['profile']?['default_price_per_litre'] ?? "---" : "---"}/L', 
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),

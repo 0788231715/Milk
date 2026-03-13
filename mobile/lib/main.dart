@@ -82,16 +82,16 @@ class _MainShellState extends State<MainShell> {
     // Screens and items that are actually available to THIS user
     final List<Widget> visibleScreens = [
       if (isAdmin) const DashboardScreen(),
-      if (!isAdmin) const ProfileScreen(), // Buyers/Suppliers start at Profile
-      const SitesScreen(),
-      if (isAdmin) const ProfileScreen(), // Admin's profile is at the end
-      const ChatScreen(),
+      if (!isAdmin) const ProfileScreen(), // Index 0 for clients
+      if (isAdmin) const SitesScreen(),    // Index 1 for admins
+      if (isAdmin) const ProfileScreen(),  // Index 2 for admins
+      const ChatScreen(),                  // Index 1 for clients, Index 3 for admins
     ];
 
     final List<BottomNavigationBarItem> navItems = [
       if (isAdmin) const BottomNavigationBarItem(icon: Icon(LucideIcons.layoutDashboard), label: 'Admin'),
       if (!isAdmin) const BottomNavigationBarItem(icon: Icon(LucideIcons.user), label: 'My Data'),
-      const BottomNavigationBarItem(icon: Icon(LucideIcons.mapPin), label: 'Sites'),
+      if (isAdmin) const BottomNavigationBarItem(icon: Icon(LucideIcons.mapPin), label: 'Sites'),
       if (isAdmin) const BottomNavigationBarItem(icon: Icon(LucideIcons.user), label: 'Profile'),
       const BottomNavigationBarItem(icon: Icon(LucideIcons.messageSquare), label: 'Chat'),
     ];

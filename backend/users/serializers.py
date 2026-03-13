@@ -8,8 +8,9 @@ class ManagerPermissionSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     manager_permissions = ManagerPermissionSerializer(read_only=True)
+    unread_count = serializers.IntegerField(read_only=True, default=0)
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'phone_number', 'manager_permissions']
+        fields = ['id', 'username', 'email', 'role', 'phone_number', 'manager_permissions', 'unread_count']
         extra_kwargs = {'password': {'write_only': True}}

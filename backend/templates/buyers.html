@@ -4,13 +4,11 @@
 {% block header_title %}Buyers List{% endblock %}
 
 {% block content %}
-<div x-data="{ open: false }">
+<div x-data="{ open: false, siteId: '{{ sites.0.id }}' }">
     <div class="mb-8 flex justify-between items-center">
-        <div class="relative w-96">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                <i data-lucide="search" class="w-5 h-5"></i>
-            </span>
-            <input type="text" placeholder="Search buyers..." class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm">
+        <div>
+            <h2 class="text-3xl font-extrabold text-gray-900">Buyer Network</h2>
+            <p class="text-gray-500 mt-1">Record sales and manage wholesale partners.</p>
         </div>
         <button @click="open = true" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg shadow-indigo-200">
             <i data-lucide="user-plus" class="w-5 h-5"></i>
@@ -18,7 +16,43 @@
         </button>
     </div>
 
-    <!-- Add Buyer Modal -->
+    <!-- Monthly Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                    <i data-lucide="droplets" class="w-6 h-6"></i>
+                </div>
+                <span class="text-blue-500 text-xs font-bold uppercase">{{ month_name }}</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Total Litres Sold</h3>
+            <p class="text-2xl font-black text-gray-800">{{ total_monthly_l|floatformat:1 }} L</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+                    <i data-lucide="trending-up" class="w-6 h-6"></i>
+                </div>
+                <span class="text-green-500 text-xs font-bold uppercase">{{ month_name }}</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Monthly Gross Sales</h3>
+            <p class="text-2xl font-black text-gray-800">RWF {{ total_monthly_rev|floatformat:0 }}</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                </div>
+                <span class="text-indigo-500 text-xs font-bold uppercase">Total Debt</span>
+            </div>
+            <h3 class="text-gray-500 text-sm font-medium">Total Net Due (inc. Loans)</h3>
+            <p class="text-2xl font-black text-indigo-600">RWF {{ total_net_due|floatformat:0 }}</p>
+        </div>
+    </div>
+
+    <!-- Monthly Sales Grid -->
     <div x-show="open" 
          class="fixed inset-0 z-50 overflow-y-auto" 
          style="display: none;"
@@ -63,6 +97,10 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Initial Password</label>
                             <input type="password" name="password" required placeholder="Min 8 characters" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
                         </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Selling Rate per Litre (RWF)</label>
+                            <input type="number" name="default_price_per_litre" value="600" step="0.01" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                        </div>
                         <div class="pt-4 flex gap-3">
                             <button type="button" @click="open = false" class="flex-1 px-4 py-2 border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 transition-all">Cancel</button>
                             <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">Save Buyer</button>
@@ -73,8 +111,97 @@
         </div>
     </div>
 
-<!-- Buyer Stats -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Monthly Sales Grid -->
+    <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden mb-12" x-data="buyerGrid()">
+        <div class="p-8 border-b border-gray-50 bg-indigo-50/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">Monthly Milk Sales Log</h3>
+                <p class="text-xs text-indigo-600 font-medium uppercase tracking-wider">Type liters directly into the grid to save</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-gray-400 uppercase">Source Site:</label>
+                    <select x-model="activeSite" class="bg-white border border-indigo-100 rounded-xl px-4 py-2 text-sm font-bold text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                        {% for site in sites %}
+                        <option value="{{ site.id }}">{{ site.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 bg-white p-1 rounded-xl border border-indigo-50">
+                    <a href="?month={{ prev_month }}&year={{ prev_year }}" class="p-2 hover:bg-gray-50 rounded-lg text-gray-400 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></a>
+                    <span class="text-sm font-bold text-gray-700 px-2">{{ month_name }} {{ current_year }}</span>
+                    <a href="?month={{ next_month }}&year={{ next_year }}" class="p-2 hover:bg-gray-50 rounded-lg text-gray-400 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50/50 border-b border-gray-100">
+                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase sticky left-0 bg-gray-50 z-10 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">Buyer</th>
+                        {% for day in days %}
+                        <th class="px-3 py-4 text-center text-xs font-bold {% if day == today_day %}text-indigo-600 bg-indigo-100/30{% else %}text-gray-400{% endif %} min-w-16 border-l border-gray-100/50">
+                            {{ day }}
+                        </th>
+                        {% endfor %}
+                        <th class="px-6 py-4 text-xs font-bold text-indigo-600 uppercase border-l-2 border-indigo-100 bg-indigo-50/30">Total L</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase bg-gray-50/50">Gross Revenue</th>
+                        <th class="px-6 py-4 text-xs font-bold text-red-600 uppercase bg-red-50/30">Loan Amt</th>
+                        <th class="px-6 py-4 text-xs font-bold text-green-600 uppercase bg-green-50/30">Net Due</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for buyer in buyer_data %}
+                    <tr class="hover:bg-indigo-50/10 transition-all group">
+                        <td class="px-6 py-4 font-bold text-gray-800 sticky left-0 bg-white group-hover:bg-gray-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px]">
+                                    {{ buyer.name|slice:":2"|upper }}
+                                </div>
+                                <span class="truncate">{{ buyer.name }}</span>
+                            </div>
+                        </td>
+                        {% for day_record in buyer.days %}
+                        <td class="p-1 border-l border-gray-100/50 {% if day_record.day == today_day %}bg-indigo-50/20{% endif %}">
+                            <input type="text" 
+                                   value="{{ day_record.litres|floatformat:1 }}"
+                                   class="w-full h-10 text-center bg-transparent border-none focus:ring-2 focus:ring-indigo-500 rounded-lg text-sm font-medium text-gray-700 placeholder-gray-200 transition-all {% if not day_record.can_edit %}cursor-not-allowed opacity-50{% endif %}"
+                                   placeholder="-"
+                                   {% if not day_record.can_edit %}disabled title="Locked"{% endif %}
+                                   @change="saveSale({buyer_id: {{ buyer.id }}, day: {{ day_record.day }}, litres: $event.target.value})"
+                                   @keydown.enter="$event.target.blur()">
+                        </td>
+                        {% endfor %}
+                        <td class="px-6 py-4 font-black text-indigo-700 border-l-2 border-indigo-100 bg-indigo-50/20">{{ buyer.total_l|floatformat:1 }}</td>
+                        <td class="px-6 py-4 font-bold text-gray-700 bg-gray-50/20">RWF {{ buyer.gross|floatformat:0 }}</td>
+                        <td class="px-6 py-4 font-bold text-red-600 bg-red-50/10">{{ buyer.loans|floatformat:0 }}</td>
+                        <td class="px-6 py-4 font-black text-green-700 bg-green-50/20">RWF {{ buyer.net|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Auto-Saving
+                </div>
+                <div class="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span> Decimal Support (1.5L)
+                </div>
+            </div>
+            <div id="sync-status" class="hidden items-center gap-2 text-xs font-bold text-green-600 animate-pulse">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                Data Synchronized
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="glass-card p-6 rounded-2xl border border-white shadow-sm flex items-center gap-4 animate-on-load">
         <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
             <i data-lucide="shopping-bag" class="w-6 h-6"></i>
@@ -176,6 +303,49 @@
 </div>
 
 <script>
+    function buyerGrid() {
+        return {
+            activeSite: '{{ sites.0.id }}',
+            async saveSale(params) {
+                const syncIndicator = document.getElementById('sync-status');
+                
+                const body = {
+                    site_id: this.activeSite,
+                    day: params.day,
+                    month: {{ current_month }},
+                    year: {{ current_year }},
+                    litres: params.litres,
+                    buyer_id: params.buyer_id
+                };
+
+                try {
+                    const response = await fetch('/api/save-milk/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    
+                    if (response.ok) {
+                        syncIndicator.classList.remove('hidden');
+                        syncIndicator.classList.add('flex');
+                        setTimeout(() => {
+                            syncIndicator.classList.remove('flex');
+                            syncIndicator.classList.add('hidden');
+                        }, 2000);
+                    } else {
+                        const errorData = await response.json();
+                        alert('Error: ' + (errorData.message || 'Check site selection'));
+                    }
+                } catch (error) {
+                    console.error('Save failed:', error);
+                }
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         gsap.from(".animate-on-load", {
             y: 20,

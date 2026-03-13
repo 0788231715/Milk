@@ -14,7 +14,30 @@ class MilkSupplyForm(forms.ModelForm):
             'quality_rating': forms.Select(choices=[(i, f"{i}/10") for i in range(1, 11)], attrs={'class': 'block w-full px-4 py-3 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition-all'}),
         }
 
-from .models import MilkSupplyRecord, MilkSaleRecord, Expense, MilkLoss
+from .models import MilkSupplyRecord, MilkSaleRecord, Expense, MilkLoss, Loan, BuyerLoan, PaymentRecord
+
+class BuyerLoanForm(forms.ModelForm):
+    class Meta:
+        model = BuyerLoan
+        fields = ['buyer', 'amount', 'description']
+        widgets = {
+            'buyer': forms.Select(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+            'amount': forms.NumberInput(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+            'description': forms.TextInput(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+        }
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = PaymentRecord
+        fields = ['payment_type', 'supplier', 'buyer', 'worker', 'amount', 'note']
+        widgets = {
+            'payment_type': forms.Select(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+            'supplier': forms.Select(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+            'buyer': forms.Select(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+            'worker': forms.Select(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+            'amount': forms.NumberInput(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+            'note': forms.TextInput(attrs={'class': 'w-full px-4 py-3 rounded-xl border-gray-200'}),
+        }
 
 class ExpenseForm(forms.ModelForm):
     class Meta:
