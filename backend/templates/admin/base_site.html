@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | MilkFlow Admin{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <span style="display: flex; align-items: center; gap: 10px;">
+            MilkFlow Admin
+        </span>
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+{% endblock %}
+
+{% block nav-global %}
+    {% if user.is_authenticated %}
+    <div style="float: right; padding: 10px; display: flex; gap: 20px; align-items: center;">
+        <a href="{% url 'dashboard' %}" style="background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 6px; color: white; text-decoration: none; font-weight: bold; border: 1px solid rgba(255,255,255,0.2);">
+            &target; View Dashboard
+        </a>
+        <a href="{% url 'home' %}" style="color: white; text-decoration: none; font-weight: bold; opacity: 0.8; hover:opacity: 1;">
+             &larr; Home Page
+        </a>
+    </div>
+    {% endif %}
+{% endblock %}

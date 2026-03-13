@@ -153,6 +153,7 @@ REST_FRAMEWORK = {
 
 # CORS configuration
 CORS_ALLOW_ALL_ORIGINS = True # Change this for production
+X_FRAME_OPTIONS = 'ALLOWALL'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field

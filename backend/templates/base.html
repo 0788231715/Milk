@@ -41,8 +41,89 @@
         }
     </style>
 </head>
-<body class="overflow-x-hidden">
+<body class="overflow-x-hidden" x-data="{ mobileMenuOpen: false }">
     <div class="flex h-screen bg-gray-50">
+        <!-- Mobile Sidebar Overlay -->
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="mobileMenuOpen = false"
+             class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 md:hidden"></div>
+
+        <!-- Mobile Sidebar -->
+        <aside x-show="mobileMenuOpen"
+               x-transition:enter="transition ease-out duration-300"
+               x-transition:enter-start="-translate-x-full"
+               x-transition:enter-end="translate-x-0"
+               x-transition:leave="transition ease-in duration-200"
+               x-transition:leave-start="translate-x-0"
+               x-transition:leave-end="-translate-x-full"
+               class="fixed inset-y-0 left-0 w-72 bg-white z-50 md:hidden flex flex-col shadow-2xl">
+            <div class="p-6 flex items-center justify-between border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+                        <i data-lucide="droplets"></i>
+                    </div>
+                    <span class="font-bold text-xl text-gray-800">MilkFlow</span>
+                </div>
+                <button @click="mobileMenuOpen = false" class="p-2 text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <nav class="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
+                <a href="{% url 'home' %}" class="flex items-center gap-3 p-4 {% if request.resolver_match.url_name == 'home' %}text-blue-600 bg-blue-50{% else %}text-gray-600{% endif %} rounded-xl font-medium">
+                    <i data-lucide="home" class="w-6 h-6"></i>
+                    Home
+                </a>
+                
+                {% if user.role != 'SUPPLIER' and user.role != 'BUYER' and user.role != 'WORKER' %}
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 p-4 {% if request.resolver_match.url_name == 'dashboard' %}text-blue-600 bg-blue-50{% else %}text-gray-600{% endif %} rounded-xl font-medium">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                    Dashboard
+                </a>
+                {% endif %}
+                
+                <hr class="my-4 border-gray-100">
+                
+                {% if user.role == 'SUPER_ADMIN' or user.role == 'MANAGER' %}
+                <a href="{% url 'supplier_list' %}" class="flex items-center gap-3 p-4 text-gray-600 rounded-xl font-medium">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                    Suppliers
+                </a>
+                <a href="{% url 'buyer_list' %}" class="flex items-center gap-3 p-4 text-gray-600 rounded-xl font-medium">
+                    <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                    Buyers
+                </a>
+                <a href="{% url 'worker_list' %}" class="flex items-center gap-3 p-4 text-gray-600 rounded-xl font-medium">
+                    <i data-lucide="briefcase" class="w-6 h-6"></i>
+                    Workers
+                </a>
+                <a href="{% url 'transaction_list' %}" class="flex items-center gap-3 p-4 text-gray-600 rounded-xl font-medium">
+                    <i data-lucide="file-text" class="w-6 h-6"></i>
+                    Transactions
+                </a>
+                {% endif %}
+
+                <a href="{% url 'user_profile' %}" class="flex items-center gap-3 p-4 text-gray-600 rounded-xl font-medium">
+                    <i data-lucide="user-circle" class="w-6 h-6"></i>
+                    My Profile
+                </a>
+                
+                <form action="{% url 'logout' %}" method="post" class="p-4">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center gap-3 w-full text-red-600 font-medium">
+                        <i data-lucide="log-out" class="w-6 h-6"></i>
+                        Logout
+                    </button>
+                </form>
+            </nav>
+        </aside>
+
         <!-- Sidebar -->
         <aside class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
             <div class="p-6 flex items-center gap-3">
@@ -53,11 +134,26 @@
             </div>
             
             <nav class="flex-1 px-4 space-y-2 mt-4">
-                {% if user.role == 'SUPER_ADMIN' or user.role == 'MANAGER' %}
+                <a href="{% url 'home' %}" class="flex items-center gap-3 p-3 {% if request.resolver_match.url_name == 'home' %}text-blue-600 bg-blue-50{% else %}text-gray-600 hover:bg-gray-50{% endif %} rounded-xl font-medium transition-all">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    Home
+                </a>
+                
+                {% if user.role != 'SUPPLIER' and user.role != 'BUYER' and user.role != 'WORKER' %}
                 <a href="{% url 'dashboard' %}" class="flex items-center gap-3 p-3 {% if request.resolver_match.url_name == 'dashboard' %}text-blue-600 bg-blue-50{% else %}text-gray-600 hover:bg-gray-50{% endif %} rounded-xl font-medium transition-all">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                     Dashboard
                 </a>
+                {% endif %}
+
+                {% if user.is_staff %}
+                <a href="{% url 'admin:index' %}" class="flex items-center gap-3 p-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-all" target="_blank">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    Admin Panel
+                </a>
+                {% endif %}
+
+                {% if user.role == 'SUPER_ADMIN' or user.role == 'MANAGER' %}
                 <a href="{% url 'supplier_list' %}" class="flex items-center gap-3 p-3 {% if request.resolver_match.url_name == 'supplier_list' %}text-blue-600 bg-blue-50{% else %}text-gray-600 hover:bg-gray-50{% endif %} rounded-xl font-medium transition-all">
                     <i data-lucide="users" class="w-5 h-5"></i>
                     Suppliers
@@ -129,14 +225,25 @@
                         <p class="text-sm font-semibold text-gray-800 truncate">{{ user.username }}</p>
                         <p class="text-xs text-gray-500 truncate">{{ user.get_role_display }}</p>
                     </div>
+                    <form action="{% url 'logout' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-400 hover:text-red-500 transition-colors">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-hidden">
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
-                <h1 class="text-lg font-semibold text-gray-800">{% block header_title %}Overview{% endblock %}</h1>
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8">
+                <div class="flex items-center gap-4">
+                    <button @click="mobileMenuOpen = true" class="p-2 text-gray-600 md:hidden hover:bg-gray-100 rounded-lg">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <h1 class="text-lg font-semibold text-gray-800">{% block header_title %}Overview{% endblock %}</h1>
+                </div>
                 <div class="flex items-center gap-4">
                     <a href="{% url 'notification_list' %}" class="p-2 text-gray-400 hover:text-gray-600 transition-all relative">
                         <i data-lucide="bell" class="w-5 h-5"></i>
@@ -158,9 +265,44 @@
             </header>
 
             <!-- Content Area -->
-            <div class="flex-1 overflow-y-auto p-8">
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
                 {% block content %}{% endblock %}
             </div>
+
+            <!-- Mobile Bottom Navigation -->
+            {% if user.is_authenticated %}
+            <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                <a href="{% url 'home' %}" class="flex flex-col items-center gap-1 {% if request.resolver_match.url_name == 'home' %}text-blue-600{% else %}text-gray-400{% endif %}">
+                    <i data-lucide="home" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">Home</span>
+                </a>
+                
+                {% if user.role != 'SUPPLIER' and user.role != 'BUYER' and user.role != 'WORKER' %}
+                <a href="{% url 'dashboard' %}" class="flex flex-col items-center gap-1 {% if request.resolver_match.url_name == 'dashboard' %}text-blue-600{% else %}text-gray-400{% endif %}">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">Dashboard</span>
+                </a>
+                {% endif %}
+
+                <a href="{% url 'chat' %}" class="flex flex-col items-center gap-1 relative {% if request.resolver_match.url_name == 'chat' %}text-blue-600{% else %}text-gray-400{% endif %}">
+                    <i data-lucide="message-square" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">Chat</span>
+                    {% if unread_messages_count > 0 %}
+                    <span class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                        {{ unread_messages_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'user_profile' %}" class="flex flex-col items-center gap-1 {% if request.resolver_match.url_name == 'user_profile' %}text-blue-600{% else %}text-gray-400{% endif %}">
+                    <i data-lucide="user" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">Profile</span>
+                </a>
+                <button @click="mobileMenuOpen = true" class="flex flex-col items-center gap-1 text-gray-400">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">More</span>
+                </button>
+            </div>
+            {% endif %}
         </main>
     </div>
 
