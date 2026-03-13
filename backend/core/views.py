@@ -35,11 +35,17 @@ class SiteDetailView(LoginRequiredMixin, DetailView):
         except ValueError: year, month = today.year, today.month
         prev_month, prev_year = (month - 1 if month > 1 else 12), (year if month > 1 else year - 1)
         next_month, next_year = (month + 1 if month < 12 else 1), (year if month < 12 else year + 1)
-        suppliers = self.object.suppliers.all().order_by('name'); _, num_days = calendar.monthrange(year, month); days = list(range(1, num_days + 1))
+        suppliers = self.object.suppliers.all().order_by('name'); buyers = Buyer.objects.all().order_by('name'); _, num_days = calendar.monthrange(year, month); days = list(range(1, num_days + 1))
         records = MilkSupplyRecord.objects.filter(site=self.object, date__year=year, date__month=month); data_map = {}
         for r in records:
             if r.supplier_id not in data_map: data_map[r.supplier_id] = {}
             data_map[r.supplier_id][r.date.day] = float(r.litres)
+        
+        sale_records = MilkSaleRecord.objects.filter(site_source=self.object, date__year=year, date__month=month); sale_map = {}
+        for r in sale_records:
+            if r.buyer_id not in sale_map: sale_map[r.buyer_id] = {}
+            sale_map[r.buyer_id][r.date.day] = float(r.litres)
+
         supplier_data = []
         for s in suppliers:
             day_values = []
@@ -51,7 +57,20 @@ class SiteDetailView(LoginRequiredMixin, DetailView):
                 elif user.role != User.SUPER_ADMIN: can_edit = False
                 day_values.append({'day': day, 'litres': data_map.get(s.id, {}).get(day, ''), 'can_edit': can_edit})
             supplier_data.append({'id': s.id, 'name': s.name, 'days': day_values})
-        context.update({'supplier_data': supplier_data, 'days': days, 'month_name': calendar.month_name[month], 'current_year': year, 'current_month': month, 'prev_month': prev_month, 'prev_year': prev_year, 'next_month': next_month, 'next_year': next_year, 'today_day': today.day if today.year == year and today.month == month else 0})
+
+        buyer_data = []
+        for b in buyers:
+            day_values = []
+            for day in days:
+                can_edit = True
+                if user.role == User.MANAGER:
+                    perms = getattr(user, 'manager_permissions', None); is_today = (year == today.year and month == today.month and day == today.day)
+                    if not is_today: can_edit = perms.can_edit_past_dates if perms else False
+                elif user.role != User.SUPER_ADMIN: can_edit = False
+                day_values.append({'day': day, 'litres': sale_map.get(b.id, {}).get(day, ''), 'can_edit': can_edit})
+            buyer_data.append({'id': b.id, 'name': b.name, 'days': day_values})
+
+        context.update({'supplier_data': supplier_data, 'buyer_data': buyer_data, 'days': days, 'month_name': calendar.month_name[month], 'current_year': year, 'current_month': month, 'prev_month': prev_month, 'prev_year': prev_year, 'next_month': next_month, 'next_year': next_year, 'today_day': today.day if today.year == year and today.month == month else 0})
         return context
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -60,20 +79,34 @@ class SaveMilkRecordView(LoginRequiredMixin, TemplateView):
         user = request.user
         if user.role not in [User.SUPER_ADMIN, User.MANAGER]: return JsonResponse({'status': 'error', 'message': 'Denied'}, status=403)
         try:
-            data = json.loads(request.body); supplier_id, site_id, day, month, year, litres = data.get('supplier_id'), data.get('site_id'), int(data.get('day')), int(data.get('month')), int(data.get('year')), data.get('litres')
+            data = json.loads(request.body); supplier_id, buyer_id, site_id, day, month, year, litres = data.get('supplier_id'), data.get('buyer_id'), data.get('site_id'), int(data.get('day')), int(data.get('month')), int(data.get('year')), data.get('litres')
             if user.role == User.MANAGER:
                 today = timezone.now().date()
                 if not (year == today.year and month == today.month and day == today.day):
                     perms = getattr(user, 'manager_permissions', None)
                     if not perms or not perms.can_edit_past_dates: return JsonResponse({'status': 'error', 'message': 'Today only'}, status=403)
+            
             date_obj = timezone.make_aware(timezone.datetime(year, month, day))
-            record = MilkSupplyRecord.objects.filter(supplier_id=supplier_id, site_id=site_id, date__year=year, date__month=month, date__day=day).first()
-            if litres is None or litres == '' or float(litres) == 0:
-                if record: record.delete()
-                return JsonResponse({'status': 'deleted'})
-            if not record: record = MilkSupplyRecord(supplier_id=supplier_id, site_id=site_id, date=date_obj, price_per_litre=500)
-            record.litres = float(litres); record.save()
-            return JsonResponse({'status': 'success', 'total': float(record.total_cost)})
+            
+            if supplier_id:
+                record = MilkSupplyRecord.objects.filter(supplier_id=supplier_id, site_id=site_id, date__year=year, date__month=month, date__day=day).first()
+                if litres is None or litres == '' or float(litres) == 0:
+                    if record: record.delete()
+                    return JsonResponse({'status': 'deleted'})
+                if not record: record = MilkSupplyRecord(supplier_id=supplier_id, site_id=site_id, date=date_obj, price_per_litre=500)
+                record.litres = float(litres); record.save()
+                return JsonResponse({'status': 'success', 'total': float(record.total_cost)})
+            
+            elif buyer_id:
+                record = MilkSaleRecord.objects.filter(buyer_id=buyer_id, site_source_id=site_id, date__year=year, date__month=month, date__day=day).first()
+                if litres is None or litres == '' or float(litres) == 0:
+                    if record: record.delete()
+                    return JsonResponse({'status': 'deleted'})
+                if not record: record = MilkSaleRecord(buyer_id=buyer_id, site_source_id=site_id, date=date_obj, price_per_litre=600)
+                record.litres = float(litres); record.save()
+                return JsonResponse({'status': 'success', 'total': float(record.total_revenue)})
+
+            return JsonResponse({'status': 'error', 'message': 'Missing ID'}, status=400)
         except Exception as e: return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 from django.contrib.auth.views import PasswordChangeView
@@ -84,7 +117,10 @@ class UserPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 
 def login_success(request):
     user = request.user
-    return redirect('dashboard') if user.role in ['SUPER_ADMIN', 'MANAGER'] else redirect('user_profile')
+    if user.role in [User.SUPER_ADMIN, User.MANAGER]:
+        return redirect('dashboard')
+    # Suppliers, Buyers, and Workers go to their personalized profile view
+    return redirect('user_profile')
 
 class UserProfileView(LoginRequiredMixin, TemplateView):
     template_name = "profile.html"; login_url = "/admin/login/"
@@ -244,14 +280,28 @@ class TrainingResourceDeleteView(LoginRequiredMixin, DeleteView):
         if request.user.role != User.SUPER_ADMIN: return redirect('training')
         return super().dispatch(request, *args, **kwargs)
 
+from django.db.models import Max
 class ChatView(LoginRequiredMixin, TemplateView):
     template_name = "chat.html"; login_url = "/admin/login/"
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs); context['chat_users'] = User.objects.exclude(id=self.request.user.id); return context
+        context = super().get_context_data(**kwargs); user = self.request.user
+        # Get all users and annotate them with the timestamp of the last message exchanged with the current user
+        chat_users = User.objects.exclude(id=user.id).annotate(
+            last_msg_time=Max('sent_messages__timestamp', filter=Q(sent_messages__receiver=user))
+        ).order_by('-last_msg_time')
+        
+        # Add unread counts for each user
+        for c_user in chat_users:
+            c_user.unread_count = ChatMessage.objects.filter(sender=c_user, receiver=user, is_read=False).count()
+            
+        context['chat_users'] = chat_users; return context
 
 class NotificationListView(LoginRequiredMixin, ListView):
     model = Notification; template_name = "notifications.html"; context_object_name = "notifications"; login_url = "/admin/login/"
-    def get_queryset(self): return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+    def get_queryset(self):
+        # Mark all as read when they view the list
+        Notification.objects.filter(user=self.request.user, is_read=False).update(is_read=True)
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
 
 class SiteListView(LoginRequiredMixin, ListView):
     model = Site; template_name = "sites.html"; context_object_name = "sites"; login_url = "/admin/login/"
@@ -276,7 +326,7 @@ class CreateWorkerView(LoginRequiredMixin, CreateView):
         username = form.cleaned_data['name'].lower().replace(' ', '_'); 
         if User.objects.filter(username=username).exists(): username = f"{username}_{timezone.now().strftime('%M%S')}"
         new_user = User.objects.create_user(username=username, password='password123', role=User.WORKER); new_user.is_staff = True; new_user.save(); form.instance.user = new_user
-        messages.success(self.request, f"Worker added!"); return super().form_valid(form)
+        messages.success(self.request, f"Worker added! Username: {username}"); return super().form_valid(form)
 
 class WorkerDeleteView(LoginRequiredMixin, DeleteView):
     model = Worker; success_url = reverse_lazy('worker_list')
@@ -336,8 +386,9 @@ class CreateSupplierView(LoginRequiredMixin, CreateView):
                 messages.error(self.request, "Denied."); return self.form_invalid(form)
         username = form.cleaned_data['name'].lower().replace(' ', '_'); 
         if User.objects.filter(username=username).exists(): username = f"{username}_{timezone.now().strftime('%M%S')}"
-        new_user = User.objects.create_user(username=username, password='password123', role=User.SUPPLIER); new_user.is_staff = True; new_user.save(); form.instance.user = new_user
-        messages.success(self.request, f"Supplier added!"); return super().form_valid(form)
+        password = self.request.POST.get('password', 'password123')
+        new_user = User.objects.create_user(username=username, password=password, role=User.SUPPLIER); new_user.is_staff = True; new_user.save(); form.instance.user = new_user
+        messages.success(self.request, f"Supplier added! Username: {username}"); return super().form_valid(form)
 
 class SupplierUpdateView(LoginRequiredMixin, UpdateView):
     model = Supplier; fields = ['name', 'contact', 'site']; template_name = "supplier_form.html"; success_url = reverse_lazy('supplier_list')
@@ -359,8 +410,9 @@ class CreateBuyerView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         username = form.cleaned_data['name'].lower().replace(' ', '_'); 
         if User.objects.filter(username=username).exists(): username = f"{username}_{timezone.now().strftime('%M%S')}"
-        new_user = User.objects.create_user(username=username, password='password123', role=User.BUYER); new_user.is_staff = True; new_user.save(); form.instance.user = new_user
-        messages.success(self.request, f"Buyer added!"); return super().form_valid(form)
+        password = self.request.POST.get('password', 'password123')
+        new_user = User.objects.create_user(username=username, password=password, role=User.BUYER); new_user.is_staff = True; new_user.save(); form.instance.user = new_user
+        messages.success(self.request, f"Buyer added! Username: {username}"); return super().form_valid(form)
 
 class BuyerUpdateView(LoginRequiredMixin, UpdateView):
     model = Buyer; fields = ['name', 'contact']; template_name = "buyer_form.html"; success_url = reverse_lazy('buyer_list')

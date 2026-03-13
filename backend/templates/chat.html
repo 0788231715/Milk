@@ -4,7 +4,7 @@
 {% block header_title %}Internal Chat{% endblock %}
 
 {% block content %}
-<div class="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden h-[calc(100vh-12rem)] flex">
+<div class="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden h-[calc(100vh-12rem)] flex" x-data="chatLogic()">
     <!-- Users List Sidebar -->
     <div class="w-80 border-r border-gray-100 flex flex-col bg-gray-50/30">
         <div class="p-6">
@@ -17,78 +17,69 @@
             </div>
         </div>
         
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 overflow-y-auto" id="contacts-list">
             {% for chat_user in chat_users %}
-            <div class="p-4 mx-2 rounded-2xl hover:bg-white hover:shadow-sm cursor-pointer transition-all flex items-center gap-3 group animate-contact">
+            <div @click="selectUser({{ chat_user.id }}, '{{ chat_user.username }}', '{{ chat_user.get_role_display }}')"
+                 class="p-4 mx-2 rounded-2xl hover:bg-white hover:shadow-sm cursor-pointer transition-all flex items-center gap-3 group animate-contact contact-item"
+                 :class="selectedUser?.id == {{ chat_user.id }} ? 'bg-white shadow-sm' : ''"
+                 id="contact-{{ chat_user.id }}">
                 <div class="relative">
                     <img src="https://ui-avatars.com/api/?name={{ chat_user.username }}&background=random" class="w-11 h-11 rounded-full border-2 border-white shadow-sm">
-                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="font-bold text-gray-800 text-sm truncate">{{ chat_user.username }}</p>
                     <p class="text-xs text-gray-400 truncate">{{ chat_user.get_role_display }}</p>
                 </div>
-                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                {% if chat_user.unread_count > 0 %}
+                <div class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full" id="unread-badge-{{ chat_user.id }}">
+                    {{ chat_user.unread_count }}
                 </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
     </div>
 
     <!-- Chat Area -->
-    <div class="flex-1 flex flex-col bg-white">
+    <div class="flex-1 flex flex-col bg-white" id="chat-window">
         <!-- Chat Header -->
-        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between" x-show="selectedUser">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                    S
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold" x-text="selectedUser?.username?.substring(0,1).toUpperCase()">
                 </div>
                 <div>
-                    <h4 class="font-bold text-gray-800">Support Chat</h4>
-                    <p class="text-xs text-green-500 flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                        Active now
-                    </p>
+                    <h4 class="font-bold text-gray-800" x-text="selectedUser?.username"></h4>
+                    <p class="text-xs text-blue-500" x-text="selectedUser?.role"></p>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <button class="p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition-all"><i data-lucide="phone" class="w-5 h-5"></i></button>
-                <button class="p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition-all"><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
+        </div>
+
+        <!-- Empty State -->
+        <div class="flex-1 flex flex-col items-center justify-center text-center p-12 bg-gray-50/20" x-show="!selectedUser">
+            <div class="w-20 h-20 bg-blue-50 text-blue-400 rounded-3xl flex items-center justify-center mb-6">
+                <i data-lucide="message-square" class="w-10 h-10"></i>
             </div>
+            <h3 class="text-xl font-bold text-gray-800">Your Messages</h3>
+            <p class="text-gray-500 max-w-xs mt-2">Select a contact from the sidebar to start a conversation.</p>
         </div>
 
         <!-- Messages Area -->
-        <div class="flex-1 p-6 overflow-y-auto space-y-6" id="messages-container">
-            <!-- Received Message -->
-            <div class="flex items-end gap-3 max-w-[80%] animate-msg-in">
-                <img src="https://ui-avatars.com/api/?name=Admin" class="w-8 h-8 rounded-full">
-                <div class="bg-gray-100 p-4 rounded-2xl rounded-bl-none shadow-sm">
-                    <p class="text-sm text-gray-800">Hello! How is the milk collection going at Nyarubuye today? 🐄</p>
-                    <span class="text-[10px] text-gray-400 mt-1 block">09:41 AM</span>
+        <div class="flex-1 p-6 overflow-y-auto space-y-4 bg-gray-50/10" id="messages-container" x-show="selectedUser">
+            <template x-for="msg in messages" :key="msg.id">
+                <div class="flex items-end gap-3 max-w-[85%] mb-4" :class="msg.sender == {{ user.id }} ? 'ml-auto flex-row-reverse' : ''">
+                    <div class="p-4 rounded-2xl shadow-sm max-w-lg" :class="msg.sender == {{ user.id }} ? 'bg-blue-600 text-white rounded-br-none shadow-blue-100' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-none shadow-gray-50'">
+                        <p class="text-sm font-medium leading-relaxed" x-text="msg.content"></p>
+                        <span class="text-[10px] mt-2 block opacity-70" :class="msg.sender == {{ user.id }} ? 'text-right' : ''" x-text="formatTime(msg.timestamp)"></span>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Sent Message -->
-            <div class="flex items-end gap-3 max-w-[80%] ml-auto flex-row-reverse animate-msg-in">
-                <div class="bg-blue-600 p-4 rounded-2xl rounded-br-none shadow-lg shadow-blue-100">
-                    <p class="text-sm text-white font-medium">Everything is perfect! We've already collected 450 Liters. The quality is excellent today. 🥛</p>
-                    <span class="text-[10px] text-blue-100 mt-1 block text-right">09:42 AM</span>
-                </div>
-                <i data-lucide="check-check" class="w-4 h-4 text-blue-500 mb-1"></i>
-            </div>
-            
-            <!-- More dynamic messages would go here -->
+            </template>
         </div>
 
         <!-- Message Input -->
-        <div class="p-6 bg-white border-t border-gray-100">
-            <div class="flex items-center gap-4 bg-gray-50 rounded-2xl p-2 pl-4 border border-gray-100">
-                <button class="text-gray-400 hover:text-blue-600 transition-all">
-                    <i data-lucide="paperclip" class="w-5 h-5"></i>
-                </button>
-                <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2">
-                <button id="send-btn" class="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center transform hover:scale-105 active:scale-95">
+        <div class="p-6 bg-white border-t border-gray-100" x-show="selectedUser">
+            <div class="flex items-center gap-4 bg-gray-50 rounded-2xl p-2 pl-4 border border-gray-100 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
+                <input type="text" x-model="newMessage" @keydown.enter="sendMessage()" placeholder="Type your message..." class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2">
+                <button @click="sendMessage()" class="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center transform hover:scale-105 active:scale-95">
                     <i data-lucide="send" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -97,122 +88,111 @@
 </div>
 
 <script>
+    window.chatLogic = function() {
+        return {
+            selectedUser: null,
+            messages: [],
+            newMessage: '',
+            polling: null,
+
+            init() {
+                // Auto-select Admin for Buyers/Suppliers
+                {% if user.role == 'BUYER' or user.role == 'SUPPLIER' %}
+                    const adminContact = document.querySelector('.contact-item'); // First contact is usually admin
+                    if (adminContact) {
+                        adminContact.click();
+                    }
+                {% endif %}
+            },
+
+            selectUser(id, username, role) {
+                console.log('Selecting user:', id, username);
+                this.selectedUser = { id, username, role };
+                this.loadMessages();
+                
+                if (this.polling) clearInterval(this.polling);
+                this.polling = setInterval(() => this.loadMessages(), 3000);
+            },
+
+            async loadMessages() {
+                if (!this.selectedUser) return;
+                try {
+                    const response = await fetch(`/api/communication/messages/`);
+                    if (response.ok) {
+                        const allMessages = await response.json();
+                        this.messages = allMessages.filter(m => 
+                            (m.sender == {{ user.id }} && m.receiver == this.selectedUser.id) ||
+                            (m.sender == this.selectedUser.id && m.receiver == {{ user.id }})
+                        );
+
+                        // Mark these messages as read if any are from the selected user
+                        const hasUnread = this.messages.some(m => m.sender == this.selectedUser.id && !m.is_read);
+                        if (hasUnread) {
+                            fetch('/api/communication/messages/mark_as_read/', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                                body: JSON.stringify({ sender_id: this.selectedUser.id })
+                            }).then(() => {
+                                // Hide the badge locally for immediate feedback
+                                const badge = document.getElementById('unread-badge-' + this.selectedUser.id);
+                                if (badge) badge.style.display = 'none';
+                            });
+                        }
+
+                        this.$nextTick(() => {
+                            const container = document.getElementById('messages-container');
+                            if (container) container.scrollTop = container.scrollHeight;
+                        });
+                    }
+                } catch (err) { console.error('Load Error:', err); }
+            },
+
+            async sendMessage() {
+                const text = this.newMessage.trim();
+                console.log('Attempting to send:', text, 'to', this.selectedUser?.id);
+                
+                if (!text || !this.selectedUser) {
+                    console.warn('Cannot send: text or user missing');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/communication/messages/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            content: text,
+                            receiver: this.selectedUser.id
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Message sent successfully');
+                        this.newMessage = '';
+                        await this.loadMessages();
+                    } else {
+                        const errData = await response.json();
+                        console.error('Send Failed:', errData);
+                        alert('Failed to send message: ' + JSON.stringify(errData));
+                    }
+                } catch (err) { 
+                    console.error('Network Error:', err); 
+                    alert('Network error while sending message');
+                }
+            },
+
+            formatTime(timestamp) {
+                return new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-        // Animation for contact list
-        gsap.from(".animate-contact", {
-            x: -30,
-            opacity: 0,
-            duration: 0.6,
-            stagger: 0.05,
-            ease: "power2.out"
-        });
-
-        // Auto-scroll to bottom
-        const container = document.getElementById('messages-container');
-        container.scrollTop = container.scrollHeight;
-
-        // Chat Logic
-        const messageInput = document.getElementById('message-input');
-        const sendBtn = document.getElementById('send-btn');
-        const messagesContainer = document.getElementById('messages-container');
-        let lastMessageId = 0;
-
-        async function fetchMessages() {
-            try {
-                // Fetch recent messages (polling for demo simplicity)
-                const response = await fetch('/api/communication/messages/');
-                if (!response.ok) return;
-                const messages = await response.json();
-                
-                // Clear container only if we haven't loaded before (or manage updates smarter)
-                // For demo, we just clear and re-render or append new ones. 
-                // A better approach is to append only new IDs > lastMessageId
-                
-                messages.forEach(msg => {
-                    if (msg.id > lastMessageId) {
-                        appendMessage(msg);
-                        lastMessageId = msg.id;
-                    }
-                });
-            } catch (err) {
-                console.error("Error fetching messages:", err);
-            }
-        }
-
-        function appendMessage(msg) {
-            const isMe = msg.sender === {{ user.id }}; // Django context injection
-            const alignClass = isMe ? 'ml-auto flex-row-reverse' : '';
-            const colorClass = isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none';
-            const timeClass = isMe ? 'text-blue-100 text-right' : 'text-gray-400';
-            
-            const html = `
-                <div class="flex items-end gap-3 max-w-[80%] ${alignClass} animate-msg-in mb-4">
-                    ${!isMe ? `<img src="https://ui-avatars.com/api/?name=${msg.sender_username}" class="w-8 h-8 rounded-full">` : ''}
-                    <div class="${colorClass} p-4 rounded-2xl shadow-sm">
-                        <p class="text-sm font-medium">${msg.content}</p>
-                        <span class="text-[10px] ${timeClass} mt-1 block">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    </div>
-                </div>
-            `;
-            messagesContainer.insertAdjacentHTML('beforeend', html);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        async function sendMessage() {
-            const content = messageInput.value.trim();
-            if (!content) return;
-
-            try {
-                // For demo, we default receiver to the first other user or hardcoded ID
-                // In a real app, you'd select a user from the sidebar.
-                // Assuming receiver_id=2 (User 2) for demo if not selected
-                const receiverId = 2; 
-
-                const response = await fetch('/api/communication/messages/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({
-                        content: content,
-                        receiver: receiverId 
-                    })
-                });
-
-                if (response.ok) {
-                    messageInput.value = '';
-                    fetchMessages(); // Immediate update
-                }
-            } catch (err) {
-                console.error("Error sending message:", err);
-            }
-        }
-
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        // Helper to get CSRF token
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        // Poll every 5 seconds
-        setInterval(fetchMessages, 5000);
-        fetchMessages(); // Initial load
+        lucide.createIcons();
+        gsap.from(".animate-contact", { x: -30, opacity: 0, duration: 0.6, stagger: 0.05, ease: "power2.out" });
     });
 </script>
 {% endblock %}
