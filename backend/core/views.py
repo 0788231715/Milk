@@ -228,14 +228,35 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 class DashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        user, today = request.user, timezone.now().date(); week_start = today - timedelta(days=today.weekday())
+        user, today = request.user, timezone.now().date(); week_start = today - timedelta(days=today.weekday()); month_start = today.replace(day=1)
         supply_qs, sale_qs, expense_qs, loss_qs = MilkSupplyRecord.objects.all(), MilkSaleRecord.objects.all(), Expense.objects.all(), MilkLoss.objects.all()
         can_see_revenue = (user.role == User.SUPER_ADMIN)
         if user.role == User.MANAGER: perms = getattr(user, 'manager_permissions', None); can_see_revenue = perms.can_see_revenue if perms else False
-        data = {'milk_today': supply_qs.filter(date__date=today).aggregate(Sum('litres'))['litres__sum'] or 0, 'loss_today': loss_qs.filter(date=today).aggregate(Sum('litres'))['litres__sum'] or 0, 'milk_week': supply_qs.filter(date__date__gte=week_start).aggregate(Sum('litres'))['litres__sum'] or 0, 'can_see_revenue': can_see_revenue}
+        
+        data = {
+            'milk_today': float(supply_qs.filter(date__date=today).aggregate(Sum('litres'))['litres__sum'] or 0),
+            'loss_today': float(loss_qs.filter(date=today).aggregate(Sum('litres'))['litres__sum'] or 0),
+            'milk_week': float(supply_qs.filter(date__date__gte=week_start).aggregate(Sum('litres'))['litres__sum'] or 0),
+            'milk_month': float(supply_qs.filter(date__date__gte=month_start).aggregate(Sum('litres'))['litres__sum'] or 0),
+            'active_suppliers_count': supply_qs.filter(date__date=today).values('supplier').distinct().count(),
+            'can_see_revenue': can_see_revenue
+        }
+        
         if can_see_revenue:
             rev_today, cost_today, exp_today = (sale_qs.filter(date__date=today).aggregate(Sum('total_revenue'))['total_revenue__sum'] or 0), (supply_qs.filter(date__date=today).aggregate(Sum('total_cost'))['total_cost__sum'] or 0), (expense_qs.filter(date=today).aggregate(Sum('amount'))['amount__sum'] or 0)
-            data.update({'revenue_today': float(rev_today), 'profit_today': float(rev_today - (cost_today + exp_today)), 'expenses_today': float(exp_today)})
+            data.update({
+                'revenue_today': float(rev_today),
+                'profit_today': float(rev_today - (cost_today + exp_today)),
+                'expenses_today': float(exp_today),
+                'revenue_month': float(sale_qs.filter(date__date__gte=month_start).aggregate(Sum('total_revenue'))['total_revenue__sum'] or 0)
+            })
+            
+        site_stats = []
+        for site in Site.objects.all():
+            collected = supply_qs.filter(site=site, date__date=today).aggregate(Sum('litres'))['litres__sum'] or 0
+            site_stats.append({'id': site.id, 'name': site.name, 'collected': float(collected)})
+        data['site_stats'] = site_stats
+        
         return Response(data)
 
 class SiteListAPIView(APIView):

@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import (
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from core.views import LandingPageView, JoinRequestView, JoinRequestListView, process_join_request, supplier_report, buyer_report, DashboardView, UserProfileView, UserPasswordChangeView, login_success, SupplierListView, CreateSupplierView, SupplierUpdateView, SupplierDeleteView, BuyerListView, CreateBuyerView, BuyerUpdateView, BuyerDeleteView, WorkerListView, CreateWorkerView, WorkerDeleteView, pay_worker, ManagerListView, ManagerCreateView, ManagerDeleteView, TransactionListView, RecordSupplyView, RecordSaleView, SiteListView, SiteDetailView, SaveMilkRecordView, ExpenseCreateView, MilkLossCreateView, ChatView, NotificationListView, TrainingView, TrainingResourceCreateView, TrainingResourceDeleteView
+from core.views import LandingPageView, JoinRequestView, JoinRequestListView, process_join_request, supplier_report, buyer_report, DashboardView, UserProfileView, UserPasswordChangeView, login_success, SupplierListView, CreateSupplierView, SupplierUpdateView, SupplierDeleteView, BuyerListView, CreateBuyerView, BuyerUpdateView, BuyerDeleteView, WorkerListView, CreateWorkerView, WorkerDeleteView, pay_worker, ManagerListView, ManagerCreateView, ManagerDeleteView, TransactionListView, RecordSupplyView, RecordSaleView, SiteListView, SiteDetailView, SaveMilkRecordView, ExpenseCreateView, MilkLossCreateView, ChatView, NotificationListView, TrainingView, TrainingResourceCreateView, TrainingResourceDeleteView, UserProfileAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,6 +16,7 @@ urlpatterns = [
     path('login-success/', login_success, name='login_success'),
     path('', LandingPageView.as_view(), name='home'),
     path('profile/', UserProfileView.as_view(), name='user_profile'),
+    path('api/users/profile/', UserProfileAPIView.as_view(), name='user_profile_api'),
     path('profile/password/', UserPasswordChangeView.as_view(), name='password_change'),
     path('request-join/', JoinRequestView.as_view(), name='join_request'),
     path('reports/supplier/<int:pk>/', supplier_report, name='supplier_report'),
