@@ -6,7 +6,8 @@ class AddResourceScreen extends StatefulWidget {
   final String resourceType; // 'Site', 'Supplier', 'Buyer', 'Worker'
   final Map<String, dynamic>? initialData;
 
-  const AddResourceScreen({super.key, required this.resourceType, this.initialData});
+  const AddResourceScreen(
+      {super.key, required this.resourceType, this.initialData});
 
   @override
   State<AddResourceScreen> createState() => _AddResourceScreenState();
@@ -70,12 +71,16 @@ class _AddResourceScreenState extends State<AddResourceScreen> {
 
       if (success && mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${widget.resourceType} added successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('${widget.resourceType} added successfully')));
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to add resource. Check data.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Failed to add resource. Check data.')));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -85,51 +90,62 @@ class _AddResourceScreenState extends State<AddResourceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Add ${widget.resourceType}')),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                if (widget.resourceType == 'Site') ...[
-                  _buildTextField('name', 'Site Name', LucideIcons.mapPin),
-                  const SizedBox(height: 16),
-                  _buildTextField('location', 'Location', LucideIcons.navigation),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  if (widget.resourceType == 'Site') ...[
+                    _buildTextField('name', 'Site Name', LucideIcons.mapPin),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                        'location', 'Location', LucideIcons.navigation),
+                  ],
+                  if (widget.resourceType != 'Site') ...[
+                    _buildDropdownField(
+                        'user', 'Link User Account', _users, 'username'),
+                    const SizedBox(height: 16),
+                    _buildTextField('name', 'Full Name', LucideIcons.user),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                        'contact', 'Contact Number', LucideIcons.phone),
+                  ],
+                  if (widget.resourceType == 'Supplier') ...[
+                    const SizedBox(height: 16),
+                    if (widget.initialData?['site'] != null)
+                      Text(
+                          'Assigning to Site ID: ${widget.initialData!['site']}',
+                          style: const TextStyle(fontWeight: FontWeight.bold))
+                    else
+                      _buildDropdownField(
+                          'site', 'Assign to Site', _sites, 'name'),
+                  ],
+                  if (widget.resourceType == 'Worker') ...[
+                    const SizedBox(height: 16),
+                    _buildTextField('role', 'Role (e.g. Driver, Clerk)',
+                        LucideIcons.briefcase),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                        'base_pay', 'Base Monthly Pay', LucideIcons.banknote,
+                        isNumber: true),
+                  ],
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16)),
+                    child: const Text('Save Resource'),
+                  ),
                 ],
-                if (widget.resourceType != 'Site') ...[
-                  _buildDropdownField('user', 'Link User Account', _users, 'username'),
-                  const SizedBox(height: 16),
-                  _buildTextField('name', 'Full Name', LucideIcons.user),
-                  const SizedBox(height: 16),
-                  _buildTextField('contact', 'Contact Number', LucideIcons.phone),
-                ],
-                if (widget.resourceType == 'Supplier') ...[
-                  const SizedBox(height: 16),
-                  if (widget.initialData?['site'] != null)
-                     Text('Assigning to Site ID: ${widget.initialData!['site']}', style: const TextStyle(fontWeight: FontWeight.bold))
-                  else
-                    _buildDropdownField('site', 'Assign to Site', _sites, 'name'),
-                ],
-                if (widget.resourceType == 'Worker') ...[
-                  const SizedBox(height: 16),
-                  _buildTextField('role', 'Role (e.g. Driver, Clerk)', LucideIcons.briefcase),
-                  const SizedBox(height: 16),
-                  _buildTextField('base_pay', 'Base Monthly Pay', LucideIcons.banknote, isNumber: true),
-                ],
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                  child: const Text('Save Resource'),
-                ),
-              ],
+              ),
             ),
-          ),
     );
   }
 
-  Widget _buildTextField(String key, String label, IconData icon, {bool isNumber = false}) {
+  Widget _buildTextField(String key, String label, IconData icon,
+      {bool isNumber = false}) {
     return TextFormField(
       initialValue: _formData[key]?.toString(),
       decoration: InputDecoration(
@@ -139,13 +155,15 @@ class _AddResourceScreenState extends State<AddResourceScreen> {
       ),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-      onSaved: (value) => _formData[key] = isNumber ? double.tryParse(value ?? '0') : value,
+      onSaved: (value) =>
+          _formData[key] = isNumber ? double.tryParse(value ?? '0') : value,
     );
   }
 
-  Widget _buildDropdownField(String key, String label, List<dynamic> items, String displayKey) {
+  Widget _buildDropdownField(
+      String key, String label, List<dynamic> items, String displayKey) {
     return DropdownButtonFormField<int>(
-      value: _formData[key],
+      initialValue: _formData[key],
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
