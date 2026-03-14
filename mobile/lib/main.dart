@@ -6,7 +6,6 @@ import 'screens/sites_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/list_screen.dart';
-import 'screens/login_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/training_screen.dart';
@@ -74,7 +73,8 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isProfileLoaded) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (!_isProfileLoaded)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     final role = _userProfile?['role'] ?? 'WORKER';
     final isAdmin = role == 'SUPER_ADMIN' || role == 'MANAGER';
@@ -83,17 +83,26 @@ class _MainShellState extends State<MainShell> {
     final List<Widget> visibleScreens = [
       if (isAdmin) const DashboardScreen(),
       if (!isAdmin) const ProfileScreen(), // Index 0 for clients
-      if (isAdmin) const SitesScreen(),    // Index 1 for admins
-      if (isAdmin) const ProfileScreen(),  // Index 2 for admins
-      const ChatScreen(),                  // Index 1 for clients, Index 3 for admins
+      if (isAdmin) const SitesScreen(), // Index 1 for admins
+      if (isAdmin) const ProfileScreen(), // Index 2 for admins
+      const ChatScreen(), // Index 1 for clients, Index 3 for admins
     ];
 
     final List<BottomNavigationBarItem> navItems = [
-      if (isAdmin) const BottomNavigationBarItem(icon: Icon(LucideIcons.layoutDashboard), label: 'Admin'),
-      if (!isAdmin) const BottomNavigationBarItem(icon: Icon(LucideIcons.user), label: 'My Data'),
-      if (isAdmin) const BottomNavigationBarItem(icon: Icon(LucideIcons.mapPin), label: 'Sites'),
-      if (isAdmin) const BottomNavigationBarItem(icon: Icon(LucideIcons.user), label: 'Profile'),
-      const BottomNavigationBarItem(icon: Icon(LucideIcons.messageSquare), label: 'Chat'),
+      if (isAdmin)
+        const BottomNavigationBarItem(
+            icon: Icon(LucideIcons.layoutDashboard), label: 'Admin'),
+      if (!isAdmin)
+        const BottomNavigationBarItem(
+            icon: Icon(LucideIcons.user), label: 'My Data'),
+      if (isAdmin)
+        const BottomNavigationBarItem(
+            icon: Icon(LucideIcons.mapPin), label: 'Sites'),
+      if (isAdmin)
+        const BottomNavigationBarItem(
+            icon: Icon(LucideIcons.user), label: 'Profile'),
+      const BottomNavigationBarItem(
+          icon: Icon(LucideIcons.messageSquare), label: 'Chat'),
     ];
 
     // Safety: ensure index doesn't go out of bounds
@@ -102,14 +111,17 @@ class _MainShellState extends State<MainShell> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isAdmin ? 'Admin Portal' : 'Client Portal', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+        title: Text(isAdmin ? 'Admin Portal' : 'Client Portal',
+            style: const TextStyle(
+                fontWeight: FontWeight.w900, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: const Color(0xFF1E293B),
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.bell, size: 20),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen())),
           ),
           const SizedBox(width: 8),
         ],
@@ -117,7 +129,9 @@ class _MainShellState extends State<MainShell> {
       drawer: _buildDrawer(role, isAdmin),
       body: visibleScreens[safeIndex],
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
+        decoration: BoxDecoration(boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+        ]),
         child: BottomNavigationBar(
           currentIndex: safeIndex,
           onTap: (index) => setState(() => _currentIndex = index),
@@ -142,34 +156,49 @@ class _MainShellState extends State<MainShell> {
             decoration: const BoxDecoration(color: Color(0xFF2563EB)),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
-              child: Text(_userProfile?['username']?[0]?.toUpperCase() ?? 'U', 
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+              child: Text(_userProfile?['username']?[0]?.toUpperCase() ?? 'U',
+                  style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2563EB))),
             ),
-            accountName: Text(_userProfile?['username'] ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold)),
+            accountName: Text(_userProfile?['username'] ?? 'User',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             accountEmail: Text(_userProfile?['email'] ?? ''),
           ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                if (isAdmin) _buildDrawerItem(LucideIcons.layoutDashboard, 'Admin Home', 0),
-                if (!isAdmin) _buildDrawerItem(LucideIcons.user, 'My Profile', 0),
-                
+                if (isAdmin)
+                  _buildDrawerItem(
+                      LucideIcons.layoutDashboard, 'Admin Home', 0),
+                if (!isAdmin)
+                  _buildDrawerItem(LucideIcons.user, 'My Profile', 0),
                 _buildDrawerItem(LucideIcons.mapPin, 'Collection Sites', 1),
-                
                 if (isAdmin) ...[
                   const Divider(indent: 20, endIndent: 20),
-                  _buildDrawerItem(LucideIcons.users, 'Suppliers', -1, isLink: true, screen: ListScreen(title: 'Suppliers', fetchFunction: _apiService.getSuppliers)),
-                  _buildDrawerItem(LucideIcons.shoppingBag, 'Buyers', -1, isLink: true, screen: ListScreen(title: 'Buyers', fetchFunction: _apiService.getBuyers)),
-                  _buildDrawerItem(LucideIcons.list, 'Transactions', -1, isLink: true, screen: const TransactionsScreen()),
+                  _buildDrawerItem(LucideIcons.users, 'Suppliers', -1,
+                      isLink: true,
+                      screen: ListScreen(
+                          title: 'Suppliers',
+                          fetchFunction: _apiService.getSuppliers)),
+                  _buildDrawerItem(LucideIcons.shoppingBag, 'Buyers', -1,
+                      isLink: true,
+                      screen: ListScreen(
+                          title: 'Buyers',
+                          fetchFunction: _apiService.getBuyers)),
+                  _buildDrawerItem(LucideIcons.list, 'Transactions', -1,
+                      isLink: true, screen: const TransactionsScreen()),
                 ],
-                
                 const Divider(indent: 20, endIndent: 20),
-                _buildDrawerItem(LucideIcons.messageSquare, 'Internal Chat', -1, isLink: true, screen: const ChatScreen()),
-                _buildDrawerItem(LucideIcons.bookOpen, 'Training Center', -1, isLink: true, screen: const TrainingScreen()),
-                
+                _buildDrawerItem(LucideIcons.messageSquare, 'Internal Chat', -1,
+                    isLink: true, screen: const ChatScreen()),
+                _buildDrawerItem(LucideIcons.bookOpen, 'Training Center', -1,
+                    isLink: true, screen: const TrainingScreen()),
                 if (role == 'SUPER_ADMIN')
-                  _buildDrawerItem(LucideIcons.userCheck, 'Join Requests', -1, isLink: true, screen: const JoinRequestsScreen()),
+                  _buildDrawerItem(LucideIcons.userCheck, 'Join Requests', -1,
+                      isLink: true, screen: const JoinRequestsScreen()),
               ],
             ),
           ),
@@ -177,9 +206,13 @@ class _MainShellState extends State<MainShell> {
             padding: const EdgeInsets.all(20),
             child: ListTile(
               leading: const Icon(LucideIcons.logOut, color: Colors.red),
-              title: const Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-              onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LandingScreen())),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              title: const Text('Logout',
+                  style: TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.bold)),
+              onTap: () => Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (_) => const LandingScreen())),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],
@@ -187,16 +220,22 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, int index, {bool isLink = false, Widget? screen}) {
+  Widget _buildDrawerItem(IconData icon, String title, int index,
+      {bool isLink = false, Widget? screen}) {
     bool isSelected = _currentIndex == index;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
-        leading: Icon(icon, color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
-        title: Text(title, style: TextStyle(
-          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF1E293B),
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        )),
+        leading: Icon(icon,
+            color:
+                isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B)),
+        title: Text(title,
+            style: TextStyle(
+              color: isSelected
+                  ? const Color(0xFF2563EB)
+                  : const Color(0xFF1E293B),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            )),
         selected: isSelected,
         onTap: () {
           Navigator.pop(context);

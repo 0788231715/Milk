@@ -49,8 +49,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
   // Use 10.0.2.2 for Android emulator to access localhost
   String get _appUrl {
     if (kIsWeb) return 'http://localhost:8000';
-    if (defaultTargetPlatform == TargetPlatform.android)
+    if (defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:8000';
+    }
     return 'http://localhost:8000';
   }
 
